@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.nullcat.sckj.mapper.NotificationMapper">
+
+
+    <select id="getMyNotifications" resultType="cn.nullcat.sckj.pojo.Notification">
+        SELECT
+        id,
+        user_id,
+        title,
+        content,
+        type,
+        is_read,
+        create_time,
+        update_time,
+        is_deleted
+        FROM notification
+        <where>
+            <if test="userId != null">
+                AND user_id = #{userId}
+            </if>
+            <if test="type != null">
+                AND type = #{type}
+            </if>
+            <if test="isRead != null">
+                AND is_read = #{isRead}
+            </if>
+            AND is_deleted = 0
+        </where>
+        ORDER BY create_time DESC
+    </select>
+
+</mapper>
