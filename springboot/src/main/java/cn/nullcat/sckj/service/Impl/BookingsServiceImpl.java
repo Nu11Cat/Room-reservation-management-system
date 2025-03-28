@@ -1,5 +1,6 @@
 package cn.nullcat.sckj.service.Impl;
 
+import cn.nullcat.sckj.exception.BusinessException;
 import cn.nullcat.sckj.mapper.ApprovalsMapper;
 import cn.nullcat.sckj.mapper.BookingsMapper;
 import cn.nullcat.sckj.pojo.Booking;
@@ -12,7 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class BookingsServiceImpl implements BookingsService {
@@ -61,7 +64,10 @@ public class BookingsServiceImpl implements BookingsService {
     public void addBooking(Booking booking) {
         // 1. 设置初始状态
         booking.setStatus(0);  // 待审批状态
-
+        // 检查时间冲突
+        if (hasConflict(booking.getRoomId(), booking.getStartTime(), booking.getEndTime(), null)) {
+            throw new BusinessException("该时间段已被预约");
+        }
         // 2. 新增预约
         bookingsMapper.addBooking(booking);
 
@@ -78,6 +84,9 @@ public class BookingsServiceImpl implements BookingsService {
      */
     @Override
     public void updateBooking(Booking booking) {
+        if (hasConflict(booking.getRoomId(), booking.getStartTime(), booking.getEndTime(), booking.getId())) {
+            throw new BusinessException("该时间段已被预约");
+        }
         bookingsMapper.updateBooking(booking);
     }
 
@@ -88,5 +97,29 @@ public class BookingsServiceImpl implements BookingsService {
     @Override
     public void cancelBooking(Integer id) {
         bookingsMapper.cancelBooking(id);
+    }
+
+
+    /**
+     * 检查预约时间是否冲突
+     * @param roomId 会议室ID
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @param excludeBookingId 排除的预约ID（用于修改预约时）
+     * @return true-有冲突，false-无冲突
+     */
+    public boolean hasConflict(Long roomId, Date startTime, Date endTime, Long excludeBookingId) {
+        // 1. 查询冲突的预约
+        List<Booking> conflictingBookings = bookingsMapper.findConflictingBookings(roomId, startTime, endTime);
+
+        // 2. 如果有排除的预约ID，从冲突列表中移除
+        if (excludeBookingId != null) {
+            conflictingBookings = conflictingBookings.stream()
+                    .filter(booking -> !booking.getId().equals(excludeBookingId))
+                    .collect(Collectors.toList());
+        }
+
+        // 3. 如果存在冲突的预约，返回true
+        return !conflictingBookings.isEmpty();
     }
 }

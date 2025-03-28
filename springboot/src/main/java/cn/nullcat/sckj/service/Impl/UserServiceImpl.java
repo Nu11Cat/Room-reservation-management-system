@@ -3,16 +3,21 @@ package cn.nullcat.sckj.service.Impl;
 import cn.nullcat.sckj.mapper.UserMapper;
 import cn.nullcat.sckj.pojo.User;
 import cn.nullcat.sckj.service.UserService;
+import cn.nullcat.sckj.utils.TokenUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.Date;
 
 @Service
 public class UserServiceImpl implements UserService {
     @Autowired
     private UserMapper userMapper;
+    @Autowired
+    private RedisTemplate<String, String> redisTemplate;
+    @Autowired
+    private TokenUtils tokenUtils;
     /**
      * 校验密码：根据用户名获取密码
      * @param username
@@ -42,7 +47,19 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public User getById(Integer userIdNow) {
-        User user = userMapper.getById(userIdNow);
+        // 1. 先从Redis获取
+        User user = tokenUtils.getUserInfo(userIdNow);
+        if (user != null) {
+            return user;
+        }
+
+        // 2. Redis没有，从数据库获取
+        user = userMapper.getById(userIdNow);
+        if (user != null) {
+            // 3. 保存到Redis
+            tokenUtils.saveUserInfo(user);
+        }
+         //
         return user;
     }
 
@@ -57,7 +74,8 @@ public class UserServiceImpl implements UserService {
         }else{
             userMapper.updatePassword(user);
         }
-
+        // 2. 更新Redis
+        tokenUtils.updateUserInfo(user);
     }
 
     /**
@@ -83,5 +101,15 @@ public class UserServiceImpl implements UserService {
     @Override
     public Integer getUserIdByUsername(String username) {
         return userMapper.getUserIdByUsername(username);
+    }
+
+    /**
+     * 清除redis用户token
+     * @param userId
+     */
+    @Override
+    public void clearUserCache(Integer userId) {
+        String key = "user:" + userId;
+        redisTemplate.delete(key);
     }
 }

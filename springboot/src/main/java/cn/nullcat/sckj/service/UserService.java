@@ -14,4 +14,6 @@ public interface UserService {
     void register(User user);
 
     Integer getUserIdByUsername(String username);
+
+    void clearUserCache(Integer userId);
 }

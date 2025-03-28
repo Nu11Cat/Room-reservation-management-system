@@ -1,6 +1,7 @@
 package cn.nullcat.sckj.interceptor;
 import cn.nullcat.sckj.pojo.Result;
 import cn.nullcat.sckj.utils.JwtUtils;
+import cn.nullcat.sckj.utils.TokenUtils;
 import com.alibaba.fastjson.JSONObject;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,7 +14,8 @@ import org.springframework.web.servlet.ModelAndView;
 
 @Component
 public class LoginCheckInterceptor implements HandlerInterceptor{
-
+    @Autowired
+    private TokenUtils tokenUtils;
     @Override
     public boolean preHandle(HttpServletRequest req, HttpServletResponse rep, Object handler) throws Exception {
 
@@ -31,6 +33,15 @@ public class LoginCheckInterceptor implements HandlerInterceptor{
         try {
             // 解析 token
             Claims claims = JwtUtils.parseJWT(jwt);
+            //
+            Integer userId = (Integer) claims.get("userId");
+            if (!tokenUtils.validateToken(jwt, userId)) {
+                Result error = Result.error("NOT_LOGIN");
+                String notLogin = JSONObject.toJSONString(error);
+                rep.getWriter().write(notLogin);
+                return false;
+            }
+             //
             // 将用户ID存入 request 属性中
             req.setAttribute("userId", claims.get("userId"));
         } catch (Exception e) {

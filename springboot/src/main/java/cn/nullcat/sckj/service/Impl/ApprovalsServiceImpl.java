@@ -3,9 +3,11 @@ package cn.nullcat.sckj.service.Impl;
 import cn.nullcat.sckj.mapper.ApprovalsMapper;
 import cn.nullcat.sckj.mapper.BookingsMapper;
 import cn.nullcat.sckj.pojo.Approval;
+import cn.nullcat.sckj.pojo.Booking;
 import cn.nullcat.sckj.pojo.PageBean;
 import cn.nullcat.sckj.pojo.VO.ApprovalVO;
 import cn.nullcat.sckj.service.ApprovalsService;
+import cn.nullcat.sckj.service.NotificationService;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +23,8 @@ public class ApprovalsServiceImpl implements ApprovalsService {
     private ApprovalsMapper approvalsMapper;
     @Autowired
     private BookingsMapper bookingsMapper;
+    @Autowired
+    private NotificationService notificationService;
 
     /**
      * 获取待审批列表
@@ -47,5 +51,8 @@ public class ApprovalsServiceImpl implements ApprovalsService {
         approvalsMapper.approval(approval);
         Long bookingId = approvalsMapper.getBookingId(approval.getId());
         bookingsMapper.bookingStatusChange(approval.getStatus(), bookingId);
+        Booking booking = bookingsMapper.getById(Math.toIntExact(bookingId));
+        Integer oldStatus = approval.getStatus();
+        notificationService.sendStatusChangeNotification(booking, oldStatus, approval.getStatus());
     }
 }

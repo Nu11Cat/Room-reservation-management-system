@@ -1,6 +1,7 @@
 package cn.nullcat.sckj.mapper;
 
 import cn.nullcat.sckj.pojo.Notification;
+import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
@@ -35,4 +36,29 @@ public interface NotificationMapper {
             "AND is_read = 0 " +
             "AND is_deleted = 0")
     Integer getUnreadById(Integer userId);
+
+    /**
+     * 添加通知
+     * @param notification
+     */
+    @Insert("INSERT INTO notification (" +
+            "        user_id," +
+            "        title," +
+            "        content," +
+            "        type," +
+            "        is_read," +
+            "        create_time," +
+            "        update_time," +
+            "        is_deleted" +
+            "    ) VALUES (" +
+            "        #{userId}," +
+            "        #{title}," +
+            "        #{content}," +
+            "        #{type}," +
+            "        0," +
+            "        NOW()," +
+            "        NOW()," +
+            "        0" +
+            "    )")
+    void insert(Notification notification);
 }
