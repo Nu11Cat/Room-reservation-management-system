@@ -37,4 +37,30 @@
         ORDER BY create_time DESC
     </select>
 
+    <select id="findConflictingBookings" resultType="cn.nullcat.sckj.pojo.Booking">
+        SELECT *
+        FROM booking
+        WHERE room_id = #{roomId}
+          AND is_deleted = 0
+          AND status = 1  -- 只检查已通过的预约
+          AND (
+            (start_time &lt;= #{endTime} AND end_time &gt;= #{startTime})
+            )
+    </select>
+    <select id="findUpcomingBookings" resultType="cn.nullcat.sckj.pojo.Booking">
+        SELECT *
+        FROM booking
+        WHERE status = 1  -- 已通过的预约
+          AND is_deleted = 0
+          AND start_time BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 5 MINUTE)
+    </select>
+
+    <select id="findEndedBookings" resultType="cn.nullcat.sckj.pojo.Booking">
+        SELECT *
+        FROM booking
+        WHERE status = 1  -- 已通过的预约
+          AND is_deleted = 0
+          AND end_time BETWEEN DATE_SUB(NOW(), INTERVAL 5 MINUTE) AND NOW()
+    </select>
+
 </mapper>

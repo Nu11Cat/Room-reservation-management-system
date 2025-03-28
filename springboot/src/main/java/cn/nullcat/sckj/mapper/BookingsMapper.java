@@ -4,6 +4,7 @@ import cn.nullcat.sckj.pojo.Booking;
 import org.apache.ibatis.annotations.*;
 
 import java.time.LocalDate;
+import java.util.Date;
 import java.util.List;
 
 @Mapper
@@ -71,4 +72,24 @@ public interface BookingsMapper {
             " update_time = NOW()" +
             " where id = #{bookId}")
     void bookingStatusChange(Integer a, Long bookId);
+
+    /**
+     * 查询指定时间段内的有效预约
+     * @param roomId 会议室ID
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 冲突的预约列表
+     */
+    List<Booking> findConflictingBookings(@Param("roomId") Long roomId,
+                                          @Param("startTime") Date startTime,
+                                          @Param("endTime") Date endTime);
+    /**
+     * 查询即将开始的预约（30分钟内）
+     */
+    List<Booking> findUpcomingBookings();
+
+    /**
+     * 查询刚刚结束的预约（5分钟内）
+     */
+    List<Booking> findEndedBookings();
 }

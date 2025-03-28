@@ -4,6 +4,7 @@ import cn.nullcat.sckj.pojo.Result;
 import cn.nullcat.sckj.pojo.User;
 import cn.nullcat.sckj.service.UserService;
 import cn.nullcat.sckj.utils.JwtUtils;
+import cn.nullcat.sckj.utils.TokenUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +19,8 @@ import java.util.Map;
 public class UserController {
     @Autowired
     private UserService userservice;
-
+    @Autowired
+    private TokenUtils tokenUtils;
     /**
      * 用户登录
      * @param user
@@ -43,6 +45,9 @@ public class UserController {
         claims.put("username",user.getUsername());
         claims.put("password",password);
         String jwt = JwtUtils.generateJwt(claims);
+        tokenUtils.saveToken(jwt, userId);
+        User fullUser = userservice.getById(userId);
+        tokenUtils.saveUserInfo(fullUser);
         return Result.success(jwt);
     }
     /**
@@ -61,7 +66,18 @@ public class UserController {
         userservice.register(user);
         return Result.success("注册成功");
     }
-
+    /**
+     * 退出登录
+     * @return
+     */
+    @PostMapping("/logout")
+    public Result logOut(HttpServletRequest request) {
+        Integer userId = (Integer) request.getAttribute("userId");
+        tokenUtils.removeToken(userId);
+        userservice.clearUserCache(userId);
+        tokenUtils.removeUserInfo(userId);
+        return Result.success("退出成功");
+    }
     /**
      * 获取当前登录用户信息
      * @param request
