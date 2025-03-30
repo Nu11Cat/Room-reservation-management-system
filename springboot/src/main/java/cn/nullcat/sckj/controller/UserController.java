@@ -44,9 +44,11 @@ public class UserController {
         claims.put("userId",userId);
         claims.put("username",user.getUsername());
         claims.put("password",password);
+        claims.put("roleId", user.getRoleId());  // 添加这一行
+        User fullUser = userservice.getById(userId);
+        claims.put("roleId", fullUser.getRoleId());
         String jwt = JwtUtils.generateJwt(claims);
         tokenUtils.saveToken(jwt, userId);
-        User fullUser = userservice.getById(userId);
         tokenUtils.saveUserInfo(fullUser);
         return Result.success(jwt);
     }

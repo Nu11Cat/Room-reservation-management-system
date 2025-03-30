@@ -59,4 +59,5 @@ public interface UserMapper {
      */
     @Select("select Id from user where username = #{username}")
     Integer getUserIdByUsername(String username);
+
 }

@@ -6,6 +6,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import java.util.Date;
 import java.util.Map;
 
+
 public class JwtUtils {
 
     private static String signKey = "itheima";
@@ -17,6 +18,10 @@ public class JwtUtils {
      * @return
      */
     public static String generateJwt(Map<String, Object> claims){
+        // 确保claims中包含roleId
+        if (!claims.containsKey("roleId")) {
+            throw new IllegalArgumentException("claims must contain roleId");
+        }
         String jwt = Jwts.builder()
                 .addClaims(claims)
                 .signWith(SignatureAlgorithm.HS256, signKey)
