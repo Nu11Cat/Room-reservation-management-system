@@ -1,5 +1,6 @@
 package cn.nullcat.sckj.controller;
 
+import cn.nullcat.sckj.annotation.RequirePermission;
 import cn.nullcat.sckj.pojo.Result;
 import cn.nullcat.sckj.pojo.User;
 import cn.nullcat.sckj.service.UserService;
@@ -21,6 +22,23 @@ public class UserController {
     private UserService userservice;
     @Autowired
     private TokenUtils tokenUtils;
+    // 查询用户列表
+    // TODO
+    @GetMapping
+    @RequirePermission("system:user:view")
+    public Result listUsers() { return  Result.success();}
+    // 添加用户
+    @PostMapping
+    @RequirePermission("system:user:add")
+    public Result addUser(@RequestBody User user) { return  Result.success(); }
+    // 删除用户
+    @DeleteMapping("/{id}")
+    @RequirePermission("system:user:delete")
+    public Result deleteUser(@PathVariable Long id) { return  Result.success();  }
+    // 获取用户详情
+    @GetMapping("/{id}")
+    @RequirePermission("system:user:view")
+    public Result getUserById(@PathVariable Long id) { return  Result.success();  }
     /**
      * 用户登录
      * @param user
@@ -98,6 +116,7 @@ public class UserController {
      * @return
      */
     @PutMapping("/info")
+    @RequirePermission("system:user:edit")
     public Result update(@RequestBody User user,HttpServletRequest request) {
         Integer userIdNow = (Integer) request.getAttribute("userId");
         user.setId(Long.valueOf(userIdNow));

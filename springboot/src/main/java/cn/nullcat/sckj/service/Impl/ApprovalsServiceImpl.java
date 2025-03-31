@@ -55,4 +55,20 @@ public class ApprovalsServiceImpl implements ApprovalsService {
         Integer oldStatus = approval.getStatus();
         notificationService.sendStatusChangeNotification(booking, oldStatus, approval.getStatus());
     }
+
+    /**
+     * 获取已审批列表
+     * @param page
+     * @param pageSize
+     * @return
+     */
+    @Override
+    public PageBean getApprovedApprovals(Integer page, Integer pageSize) {
+        PageHelper.startPage(page, pageSize);
+        List<ApprovalVO> list = approvalsMapper.getApprovedApprovals();
+        Page<ApprovalVO> p = (Page<ApprovalVO>) list;
+
+        PageBean pageBean = new PageBean(p.getTotal(), p.getResult());
+        return pageBean;
+    }
 }

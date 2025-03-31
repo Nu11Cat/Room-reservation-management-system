@@ -1,5 +1,6 @@
 package cn.nullcat.sckj.controller;
 
+import cn.nullcat.sckj.annotation.RequirePermission;
 import cn.nullcat.sckj.pojo.PageBean;
 import cn.nullcat.sckj.pojo.Result;
 import cn.nullcat.sckj.pojo.Room;
@@ -55,6 +56,7 @@ public class RoomController {
      * @return
      */
     @PostMapping
+    @RequirePermission("room:add")
     public Result addRoom(@RequestBody Room room) {
         roomService.addRoom(room);
         return Result.success("添加成功");
@@ -67,6 +69,7 @@ public class RoomController {
      * @return
      */
     @PutMapping("/{id}")
+    @RequirePermission("room:edit")
     public Result updateRoom(@PathVariable Long id, @RequestBody Room room) {
         room.setId(id);
         roomService.updateRoom(room);
@@ -79,6 +82,7 @@ public class RoomController {
      * @return
      */
     @DeleteMapping("/{id}")
+    @RequirePermission("room:delete")
     public Result deleteRoom(@PathVariable Integer id) {
         roomService.deleteById(id);
         return Result.success("删除成功");

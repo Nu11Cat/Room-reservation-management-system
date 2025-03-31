@@ -3,8 +3,11 @@ package cn.nullcat.sckj.service.Impl;
 import cn.nullcat.sckj.exception.BusinessException;
 import cn.nullcat.sckj.mapper.ApprovalsMapper;
 import cn.nullcat.sckj.mapper.BookingsMapper;
+import cn.nullcat.sckj.mapper.RolePermissionMapper;
+import cn.nullcat.sckj.mapper.UserMapper;
 import cn.nullcat.sckj.pojo.Booking;
 import cn.nullcat.sckj.pojo.PageBean;
+import cn.nullcat.sckj.pojo.User;
 import cn.nullcat.sckj.service.BookingsService;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
@@ -24,6 +27,10 @@ public class BookingsServiceImpl implements BookingsService {
     private BookingsMapper bookingsMapper;
     @Autowired
     private ApprovalsMapper approvalsMapper;
+    @Autowired
+    private UserMapper userMapper;
+    @Autowired
+    private RolePermissionMapper rolePermissionMapper;
     /**
      * 获取预约列表
      * @param page
@@ -121,5 +128,39 @@ public class BookingsServiceImpl implements BookingsService {
 
         // 3. 如果存在冲突的预约，返回true
         return !conflictingBookings.isEmpty();
+    }
+    /**
+     * 检查用户是否有权限操作指定的预订记录
+     */
+    public boolean hasBookingPermission(Long userId, Long bookingId) {
+        // 1. 获取预订记录
+        Booking booking = bookingsMapper.getById(Math.toIntExact(bookingId));
+        if (booking == null) {
+            return false;
+        }
+
+        // 2. 检查是否是记录的创建者
+        if (booking.getUserId().equals(userId)) {
+            return true;
+        }
+
+        // 3. 获取用户角色
+        User user = userMapper.getById(Math.toIntExact(userId));
+        if (user == null) {
+            return false;
+        }
+
+        // 检查是否有管理权限（管理员）
+        if (rolePermissionMapper.hasPermission(user.getRoleId(), "booking:manage")) {
+            return true;
+        }
+
+        // 检查是否有审批权限且记录状态为待审批
+        if (rolePermissionMapper.hasPermission(user.getRoleId(), "booking:approve") &&
+                booking.getStatus() == 0) { // 0表示待审批
+            return true;
+        }
+
+        return false;
     }
 }
