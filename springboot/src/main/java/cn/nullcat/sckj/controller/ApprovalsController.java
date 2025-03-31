@@ -1,5 +1,6 @@
 package cn.nullcat.sckj.controller;
 
+import cn.nullcat.sckj.annotation.RequirePermission;
 import cn.nullcat.sckj.pojo.Approval;
 import cn.nullcat.sckj.pojo.PageBean;
 import cn.nullcat.sckj.pojo.Result;
@@ -23,12 +24,24 @@ public class ApprovalsController {
      * @return
      */
     @GetMapping("/pending")
+    @RequirePermission("booking:approve")
     public Result getPendingApprovals(@RequestParam(defaultValue = "1") Integer page,
                                       @RequestParam(defaultValue = "10") Integer pageSize) {
         PageBean pageBean = approvalsService.getPendingApprovals(page,pageSize);
         return Result.success(pageBean);
     }
 
+    /**
+     * 获取已审批列表
+     * @param page
+     * @return
+     */
+    @GetMapping("/approved")
+    public Result getApprovals(@RequestParam(defaultValue = "1") Integer page,
+                               @RequestParam(defaultValue = "10") Integer pageSize){
+        PageBean pageBean = approvalsService.getApprovedApprovals(page,pageSize);
+        return Result.success(pageBean);
+    }
     /**
      * 审批预约
      * @param approval
@@ -37,6 +50,7 @@ public class ApprovalsController {
      * @return
      */
     @PutMapping("/{id}")
+    @RequirePermission("booking:approve")
     public Result approval(@RequestBody Approval approval, @PathVariable Long id, HttpServletRequest request) {
         Integer userIdNow = (Integer) request.getAttribute("userId");
         approval.setId(id);

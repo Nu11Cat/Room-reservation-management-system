@@ -45,4 +45,10 @@ public interface ApprovalsMapper {
      */
     @Select("select booking_id from approval where id = #{id}")
     Long getBookingId(Long id);
+
+    /**
+     * 获取已审批列表
+     * @return
+     */
+    List<ApprovalVO> getApprovedApprovals();
 }

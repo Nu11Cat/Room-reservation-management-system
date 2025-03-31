@@ -28,5 +28,31 @@
           AND a.is_deleted = 0
         ORDER BY a.create_time DESC
     </select>
+    <select id="getApprovedApprovals" resultType="cn.nullcat.sckj.pojo.VO.ApprovalVO">
+        SELECT
+        a.id,
+        a.booking_id AS bookingId,
+        a.approver_id AS approverId,
+        a.status,
+        a.comment,
+        a.create_time AS createTime,
+        a.update_time AS updateTime,
+        a.is_deleted AS isDeleted,
+        b.title,
+        b.start_time AS startTime,
+        b.end_time AS endTime,
+        b.user_id AS applicantId,
+        u.username AS applicantName,
+        r.name AS roomName
+        FROM
+        approval a
+        LEFT JOIN booking b ON a.booking_id = b.id AND b.is_deleted = 0
+        LEFT JOIN user u ON b.user_id = u.id
+        LEFT JOIN room r ON b.room_id = r.id
+        WHERE
+        a.is_deleted = 0
+        AND a.status IN (1, 2) <!-- 已批准或已拒绝 -->
+        ORDER BY a.update_time DESC
+    </select>
 
 </mapper>

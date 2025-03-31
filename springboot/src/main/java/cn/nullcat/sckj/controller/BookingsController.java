@@ -1,5 +1,6 @@
 package cn.nullcat.sckj.controller;
 
+import cn.nullcat.sckj.annotation.RequirePermission;
 import cn.nullcat.sckj.pojo.Booking;
 import cn.nullcat.sckj.pojo.PageBean;
 import cn.nullcat.sckj.pojo.Result;
@@ -31,6 +32,7 @@ public class BookingsController {
      * @return
      */
     @GetMapping
+    @RequirePermission("booking:view")
     public Result getBookings(@RequestParam(defaultValue = "1") Integer page,
                               @RequestParam(defaultValue = "10") Integer pageSize,
                               Integer roomId,
@@ -89,6 +91,7 @@ public class BookingsController {
      * @return
      */
     @PutMapping("/{id}/cancel")
+    @RequirePermission("booking:cancel")
     public Result cancelBooking(@PathVariable Integer id) {
         bookingsService.cancelBooking(id);
         return Result.success("取消成功");

@@ -13,7 +13,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
-
+import cn.nullcat.sckj.annotation.RequirePermission;
+import org.springframework.web.method.HandlerMethod;
 @Component
 public class LoginCheckInterceptor implements HandlerInterceptor{
     @Autowired
@@ -57,7 +58,23 @@ public class LoginCheckInterceptor implements HandlerInterceptor{
                 rep.getWriter().write(notLogin);
                 return false;
             }
+            // 添加处理注解的逻辑（添加在现有preHandle方法中）
+            // 在获取用户信息后，检查方法是否有RequirePermission注解
 
+            // 检查是否有权限注解
+            if (handler instanceof HandlerMethod) {
+                HandlerMethod handlerMethod = (HandlerMethod) handler;
+                RequirePermission annotation = handlerMethod.getMethodAnnotation(RequirePermission.class);
+
+                if (annotation != null) {
+                    String requiredPermission = annotation.value();
+                    if (!rolePermissionMapper.hasPermission(user.getRoleId(), requiredPermission)) {
+                        Result error = Result.error("NO_PERMISSION");
+                        rep.getWriter().write(JSONObject.toJSONString(error));
+                        return false;
+                    }
+                }
+            }
             // 7. 检查审批权限
             if (url.contains("/approvals/")) {
                 if (!rolePermissionMapper.hasPermission(user.getRoleId(), "booking:approve")) {
