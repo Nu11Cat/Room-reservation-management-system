@@ -22,16 +22,36 @@ public class BookingNotificationTask {
     public void checkBookingTime() {
         log.info("开始检查预约时间...");
 
-        // 1. 获取即将开始的预约
-        List<Booking> upcomingBookings = bookingsMapper.findUpcomingBookings();
-        for (Booking booking : upcomingBookings) {
-            notificationService.sendUpcomingNotification(booking);
+        try {
+            // 1. 获取即将开始的预约
+            List<Booking> upcomingBookings = bookingsMapper.findUpcomingBookings();
+            log.info("发现 {} 个即将开始的预约需要发送通知", upcomingBookings.size());
+
+            for (Booking booking : upcomingBookings) {
+                try {
+                    log.info("发送预约即将开始通知: 预约ID={}, 标题={}", booking.getId(), booking.getTitle());
+                    notificationService.sendUpcomingNotification(booking);
+                } catch (Exception e) {
+                    log.error("发送预约即将开始通知失败: 预约ID=" + booking.getId(), e);
+                }
+            }
+
+            // 2. 获取刚刚结束的预约
+            List<Booking> endedBookings = bookingsMapper.findEndedBookings();
+            log.info("发现 {} 个已结束的预约需要发送通知", endedBookings.size());
+
+            for (Booking booking : endedBookings) {
+                try {
+                    log.info("发送预约已结束通知: 预约ID={}, 标题={}", booking.getId(), booking.getTitle());
+                    notificationService.sendEndNotification(booking);
+                } catch (Exception e) {
+                    log.error("发送预约已结束通知失败: 预约ID=" + booking.getId(), e);
+                }
+            }
+        } catch (Exception e) {
+            log.error("检查预约时间任务执行异常", e);
         }
 
-        // 2. 获取刚刚结束的预约
-        List<Booking> endedBookings = bookingsMapper.findEndedBookings();
-        for (Booking booking : endedBookings) {
-            notificationService.sendEndNotification(booking);
-        }
+        log.info("预约时间检查完成");
     }
 }

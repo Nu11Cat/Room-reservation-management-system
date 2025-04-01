@@ -22,4 +22,7 @@ public class Booking {
     private Date createTime;            // 创建时间
     private Date updateTime;            // 更新时间
     private Boolean isDeleted;          // 是否删除
+
+    private Integer isStartNotified;    // 是否已发送开始通知
+    private Integer isEndNotified;      // 是否已发送结束通知
 }

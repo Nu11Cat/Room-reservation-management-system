@@ -1,22 +1,30 @@
 package cn.nullcat.sckj.service.Impl;
 
+import cn.nullcat.sckj.mapper.BookingsMapper;
 import cn.nullcat.sckj.mapper.NotificationMapper;
+import cn.nullcat.sckj.mapper.UserMapper;
 import cn.nullcat.sckj.pojo.Booking;
 import cn.nullcat.sckj.pojo.Notification;
 import cn.nullcat.sckj.pojo.PageBean;
 import cn.nullcat.sckj.service.NotificationService;
+import cn.nullcat.sckj.websocket.NotificationWebSocket;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Service
 public class NotificationServiceImpl implements NotificationService {
     @Autowired
     private NotificationMapper notificationMapper;
-
+    @Autowired
+    private UserMapper userMapper;
+    @Autowired
+    private BookingsMapper bookingsMapper;
     /**
      * 获取通知列表
      * @param page
@@ -64,6 +72,8 @@ public class NotificationServiceImpl implements NotificationService {
         notification.setContent(getStatusChangeContent(booking, oldStatus, newStatus));
         notification.setType(1); // 1-预约状态变更
         notificationMapper.insert(notification);
+        // 在sendStatusChangeNotification方法末尾添加
+        NotificationWebSocket.sendNotification(Math.toIntExact(booking.getUserId()), notification);
     }
     /**
      * 发送预约即将开始通知
@@ -76,6 +86,10 @@ public class NotificationServiceImpl implements NotificationService {
         notification.setContent(getUpcomingContent(booking));
         notification.setType(2); // 2-预约提醒
         notificationMapper.insert(notification);
+        // 更新预订的开始通知状态为已通知
+        bookingsMapper.updateStartNotified(booking.getId());
+        // 在sendUpcomingNotification方法末尾添加
+        NotificationWebSocket.sendNotification(Math.toIntExact(booking.getUserId()), notification);
     }
     /**
      * 发送预约结束通知
@@ -88,6 +102,49 @@ public class NotificationServiceImpl implements NotificationService {
         notification.setContent(getEndContent(booking));
         notification.setType(2); // 2-预约提醒
         notificationMapper.insert(notification);
+        // 更新预订的开始通知状态为已通知
+        bookingsMapper.updateEndNotified(booking.getId());
+        // 在sendEndNotification方法末尾添加
+        NotificationWebSocket.sendNotification(Math.toIntExact(booking.getUserId()), notification);
+    }
+
+    /**
+     * 发送通知
+     * @param notification
+     */
+    @Override
+    public void sendNotification(Notification notification) {
+        String title = notification.getTitle();
+        String content = notification.getContent();
+        List<Long> userIds = userMapper.getAllUserIds();
+        // 批量插入通知
+        List<Notification> notifications = new ArrayList<>();
+        Date now = new Date();
+
+        for (Long userId : userIds) {
+            Notification notification1 = new Notification();
+            notification1.setUserId(userId);
+            notification1.setTitle(title);
+            notification1.setContent(content);
+            notification1.setType(3);
+            notification1.setIsRead(false); // 未读状态
+            notification1.setCreateTime(now);
+            notification1.setUpdateTime(now);
+            notification1.setIsDeleted(false);
+
+            notifications.add(notification1);
+
+            // 每100条执行一次批量插入，避免一次性插入过多数据
+            if (notifications.size() >= 100) {
+                notificationMapper.batchInsert(notifications);
+                notifications.clear();
+            }
+        }
+
+        // 处理剩余的通知
+        if (!notifications.isEmpty()) {
+            notificationMapper.batchInsert(notifications);
+        }
     }
 
 

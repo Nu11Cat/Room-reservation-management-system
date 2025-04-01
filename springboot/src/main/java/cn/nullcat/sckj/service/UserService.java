@@ -1,5 +1,6 @@
 package cn.nullcat.sckj.service;
 
+import cn.nullcat.sckj.pojo.PageBean;
 import cn.nullcat.sckj.pojo.User;
 
 public interface UserService {
@@ -16,4 +17,10 @@ public interface UserService {
     Integer getUserIdByUsername(String username);
 
     void clearUserCache(Integer userId);
+
+    PageBean getAllUsers(Integer page, Integer pageSize);
+
+    void add(User user);
+
+    void banOrUnseal(Integer id);
 }

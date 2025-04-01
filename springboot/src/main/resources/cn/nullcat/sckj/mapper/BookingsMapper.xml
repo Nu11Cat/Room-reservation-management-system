@@ -47,12 +47,15 @@
             (start_time &lt;= #{endTime} AND end_time &gt;= #{startTime})
             )
     </select>
+
     <select id="findUpcomingBookings" resultType="cn.nullcat.sckj.pojo.Booking">
         SELECT *
         FROM booking
         WHERE status = 1  -- 已通过的预约
           AND is_deleted = 0
-          AND start_time BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 5 MINUTE)
+          AND is_start_notified = 0  -- 未发送过开始通知
+          AND start_time BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 20 MINUTE)
+          AND DATE_SUB(start_time, INTERVAL 15 MINUTE) &lt;= NOW()  -- 开始前15-20分钟窗口
     </select>
 
     <select id="findEndedBookings" resultType="cn.nullcat.sckj.pojo.Booking">
@@ -60,7 +63,8 @@
         FROM booking
         WHERE status = 1  -- 已通过的预约
           AND is_deleted = 0
-          AND end_time BETWEEN DATE_SUB(NOW(), INTERVAL 5 MINUTE) AND NOW()
+          AND is_end_notified = 0  -- 未发送过结束通知
+          AND end_time BETWEEN DATE_SUB(NOW(), INTERVAL 5 MINUTE) AND NOW()  -- 结束后0-5分钟窗口
     </select>
 
 </mapper>

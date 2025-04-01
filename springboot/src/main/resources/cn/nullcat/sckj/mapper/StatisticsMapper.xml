@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.nullcat.sckj.mapper.StatisticsMapper">
+    <select id="getRoomUsageStatistics" resultType="cn.nullcat.sckj.pojo.DTO.RoomUsageDTO">
+        SELECT
+            r.id AS roomId,
+            r.name AS roomName,
+            r.location,
+            r.capacity,
+            COUNT(b.id) AS bookingCount,
+            ROUND(
+                    COUNT(b.id) * 100.0 /
+                    (DATEDIFF(#{endDate}, #{startDate}) + 1),
+                    2
+            ) AS usageRate
+        FROM
+            room r
+                LEFT JOIN
+            booking b ON r.id = b.room_id AND b.status = 1
+                AND b.start_time BETWEEN #{startDate} AND #{endDate}
+                AND b.is_deleted = 0
+        WHERE
+            r.is_deleted = 0
+        GROUP BY
+            r.id, r.name, r.location, r.capacity
+        ORDER BY
+            bookingCount DESC
+    </select>
+</mapper>
