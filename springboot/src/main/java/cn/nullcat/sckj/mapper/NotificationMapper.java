@@ -61,4 +61,12 @@ public interface NotificationMapper {
             "        0" +
             "    )")
     void insert(Notification notification);
+
+    @Insert("<script>" +
+            "INSERT INTO notification(user_id, title, content, type, is_read, create_time, update_time, is_deleted) VALUES " +
+            "<foreach collection='list' item='item' separator=','>" +
+            "(#{item.userId}, #{item.title}, #{item.content}, #{item.type}, #{item.isRead}, #{item.createTime}, #{item.updateTime}, #{item.isDeleted})" +
+            "</foreach>" +
+            "</script>")
+    void batchInsert(List<Notification> notifications);
 }

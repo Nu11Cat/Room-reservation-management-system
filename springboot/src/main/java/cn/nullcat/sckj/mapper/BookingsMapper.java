@@ -92,4 +92,19 @@ public interface BookingsMapper {
      * 查询刚刚结束的预约（5分钟内）
      */
     List<Booking> findEndedBookings();
+
+
+    /**
+     * 更新预订的开始通知状态
+     * @param id 预订ID
+     */
+    @Update("UPDATE booking SET is_start_notified = 1, update_time = NOW() WHERE id = #{id}")
+    void updateStartNotified(Long id);
+
+    /**
+     * 更新预订的结束通知状态
+     * @param id 预订ID
+     */
+    @Update("UPDATE booking SET is_end_notified = 1, update_time = NOW() WHERE id = #{id}")
+    void updateEndNotified(Long id);
 }

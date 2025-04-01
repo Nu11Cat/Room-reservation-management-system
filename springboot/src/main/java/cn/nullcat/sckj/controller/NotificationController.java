@@ -1,5 +1,7 @@
 package cn.nullcat.sckj.controller;
 
+import cn.nullcat.sckj.annotation.RequirePermission;
+import cn.nullcat.sckj.pojo.Notification;
 import cn.nullcat.sckj.pojo.PageBean;
 import cn.nullcat.sckj.pojo.Result;
 import cn.nullcat.sckj.service.NotificationService;
@@ -25,6 +27,7 @@ public class NotificationController {
      * @return
      */
     @GetMapping
+    @RequirePermission("notification:list")
     public Result getMyNotifications(@RequestParam(defaultValue = "1") Integer page,
                                     @RequestParam(defaultValue = "10") Integer pageSize,
                                     Integer type,
@@ -40,6 +43,7 @@ public class NotificationController {
      * @return
      */
     @PutMapping("/{id}/read")
+    @RequirePermission("notification:view")
     public Result readNotifications(@PathVariable Integer id) {
         notificationService.readNotifications(id);
         return Result.success("已标记已读");
@@ -51,10 +55,22 @@ public class NotificationController {
      * @return
      */
     @GetMapping("/unread/count")
+    @RequirePermission("notification:view")
     public Result getUnreadCount(HttpServletRequest request) {
         Integer userId = (Integer) request.getAttribute("userId");
         Integer unread = notificationService.getUnreadCount(userId);
         return Result.success(unread);
     }
 
+    /**
+     * 发布通知
+     * @param notification
+     * @return
+     */
+    @PostMapping("/send")
+    @RequirePermission("notification:send")
+    public Result send(@RequestBody Notification notification) {
+        notificationService.sendNotification(notification);
+        return Result.success("发布成功");
+    }
 }

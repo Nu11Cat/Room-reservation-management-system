@@ -1,14 +1,19 @@
 package cn.nullcat.sckj.service.Impl;
 
 import cn.nullcat.sckj.mapper.UserMapper;
+import cn.nullcat.sckj.pojo.Booking;
+import cn.nullcat.sckj.pojo.PageBean;
 import cn.nullcat.sckj.pojo.User;
 import cn.nullcat.sckj.service.UserService;
 import cn.nullcat.sckj.utils.TokenUtils;
+import com.github.pagehelper.Page;
+import com.github.pagehelper.PageHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.List;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -111,5 +116,48 @@ public class UserServiceImpl implements UserService {
     public void clearUserCache(Integer userId) {
         String key = "user:" + userId;
         redisTemplate.delete(key);
+    }
+
+    /**
+     * 获取全部用户信息
+     * @param page
+     * @param pageSize
+     * @return
+     */
+    @Override
+    public PageBean getAllUsers(Integer page, Integer pageSize) {
+        PageHelper.startPage(page, pageSize);
+        List<Booking> list = userMapper.getAllUsers();
+        Page<Booking> p = (Page<Booking>) list;
+
+        PageBean pageBean = new PageBean(p.getTotal(), p.getResult());
+        return pageBean;
+    }
+
+    /**
+     * 添加用户
+     * @param user
+     */
+    @Override
+    public void add(User user) {
+        user.setCreateTime(new Date());
+        user.setUpdateTime(new Date());
+        user.setStatus(1);
+        user.setIsDeleted(false);
+        user.setRoleId(2L);
+        userMapper.register(user);
+    }
+
+    /**
+     * 封禁/解封用户
+     * @param id
+     */
+    @Override
+    public void banOrUnseal(Integer id) {
+        if(userMapper.getById(id).getStatus()==1) {
+            userMapper.banById(id);
+        }else{
+            userMapper.unsealById(id);
+        }
     }
 }

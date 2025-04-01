@@ -11,6 +11,7 @@ import cn.nullcat.sckj.pojo.User;
 import cn.nullcat.sckj.service.BookingsService;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
+import jakarta.servlet.http.HttpServletRequest;
 import org.apache.ibatis.annotations.Select;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -31,6 +32,8 @@ public class BookingsServiceImpl implements BookingsService {
     private UserMapper userMapper;
     @Autowired
     private RolePermissionMapper rolePermissionMapper;
+    @Autowired
+    private HttpServletRequest request; // 添加这行
     /**
      * 获取预约列表
      * @param page
@@ -44,6 +47,19 @@ public class BookingsServiceImpl implements BookingsService {
      */
     @Override
     public PageBean getBookings(Integer page, Integer pageSize, Integer roomId, Integer userId, Integer status, LocalDate begin, LocalDate end) {
+        // 获取当前登录用户ID
+        Integer currentUserId = (Integer) request.getAttribute("userId");
+        User currentUser = userMapper.getById(currentUserId);
+
+        // 如果不是管理员或审批人，且没有指定查询用户，则只查询自己的预约
+        boolean hasManagePermission = rolePermissionMapper.hasPermission(currentUser.getRoleId(), "booking:manage");
+        boolean hasApprovalPermission = rolePermissionMapper.hasPermission(currentUser.getRoleId(), "booking:approve");
+
+        if (!hasManagePermission && !hasApprovalPermission && userId == null) {
+            userId = currentUserId;
+        }
+
+
         PageHelper.startPage(page, pageSize);
         List<Booking> list = bookingsMapper.getBookings(roomId,userId,status,begin, end);
         Page<Booking> p = (Page<Booking>) list;
@@ -59,7 +75,21 @@ public class BookingsServiceImpl implements BookingsService {
      */
     @Override
     public Booking getById(Integer id) {
+        // 获取预约详情
         Booking booking = bookingsMapper.getById(id);
+        if (booking == null) {
+            throw new BusinessException("预约不存在");
+        }
+
+        // 获取当前登录用户ID
+        Integer currentUserId = (Integer) request.getAttribute("userId");
+        User currentUser = userMapper.getById(currentUserId);
+
+        // 检查是否有权限查看此预约
+        boolean hasPermission = hasBookingPermission(currentUser.getId(), booking.getId().longValue());
+        if (!hasPermission) {
+            throw new BusinessException("没有权限查看此预约");
+        }
         return booking;
     }
 

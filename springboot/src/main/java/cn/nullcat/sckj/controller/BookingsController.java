@@ -32,7 +32,7 @@ public class BookingsController {
      * @return
      */
     @GetMapping
-    @RequirePermission("booking:view")
+    @RequirePermission("booking:list")
     public Result getBookings(@RequestParam(defaultValue = "1") Integer page,
                               @RequestParam(defaultValue = "10") Integer pageSize,
                               Integer roomId,
@@ -51,6 +51,7 @@ public class BookingsController {
      * @return
      */
     @GetMapping("/{id}")
+    @RequirePermission("booking:view")
     public Result getBookings(@PathVariable Integer id) {
         Booking booking = bookingsService.getById(id);
         return Result.success(booking);
@@ -62,6 +63,7 @@ public class BookingsController {
      * @return
      */
     @PostMapping
+    @RequirePermission("booking:add")
     public Result addBooking(@RequestBody Booking booking, HttpServletRequest request) {
         Integer userIdNow = (Integer) request.getAttribute("userId");
         booking.setUserId(Long.valueOf(userIdNow));
@@ -76,6 +78,7 @@ public class BookingsController {
      * @return
      */
     @PutMapping("/{id}")
+    @RequirePermission("booking:edit")
     public Result updateBooking(@PathVariable Long id,@RequestBody Booking booking, HttpServletRequest request) {
         Integer userIdNow = (Integer) request.getAttribute("userId");
         booking.setUserId(Long.valueOf(userIdNow));
@@ -86,7 +89,6 @@ public class BookingsController {
 
     /**
      * 取消预约
-     *
      * @param id
      * @return
      */

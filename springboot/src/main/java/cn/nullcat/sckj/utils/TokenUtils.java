@@ -63,4 +63,5 @@ public class TokenUtils {
         String key = USER_PREFIX + user.getId();
         redisTemplateForObject.opsForValue().set(key, user, TOKEN_EXPIRE, TimeUnit.MILLISECONDS);
     }
+
 }

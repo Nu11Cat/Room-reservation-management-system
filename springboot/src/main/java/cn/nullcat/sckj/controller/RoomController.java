@@ -28,6 +28,7 @@ public class RoomController {
      * @return
      */
     @GetMapping
+    @RequirePermission("room:list")
     public Result getRooms(@RequestParam(defaultValue = "1") Integer page,
                            @RequestParam(defaultValue = "10") Integer pageSize,
                            String name,
@@ -45,6 +46,7 @@ public class RoomController {
      * @return
      */
     @GetMapping("/{id}")
+    @RequirePermission("room:view")
     public Result getRoom(@PathVariable Integer id) {
         Room room = roomService.getById(id);
         return Result.success(room);

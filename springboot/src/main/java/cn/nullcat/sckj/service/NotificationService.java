@@ -1,6 +1,7 @@
 package cn.nullcat.sckj.service;
 
 import cn.nullcat.sckj.pojo.Booking;
+import cn.nullcat.sckj.pojo.Notification;
 import cn.nullcat.sckj.pojo.PageBean;
 
 public interface NotificationService {
@@ -23,4 +24,6 @@ public interface NotificationService {
      * 发送预约结束通知
      */
     void sendEndNotification(Booking booking);
+
+    void sendNotification(Notification notification);
 }
