@@ -10,6 +10,7 @@ import request from '@/utils/request';
  * @returns {Promise}
  */
 export function getNotificationList(params) {
+  console.log('通知列表请求参数:', params);
   return request({
     url: '/notification',
     method: 'get',
@@ -53,7 +54,7 @@ export function getUnreadCount() {
  */
 export function sendNotification(data) {
   return request({
-    url: '/notification',
+    url: '/notification/send',
     method: 'post',
     data
   });

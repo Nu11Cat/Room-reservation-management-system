@@ -421,7 +421,6 @@ export default {
       const conflictingBookings = props.bookings.filter(booking => {
         if (booking.roomId !== roomId) return false;
         if (dayjs(booking.bookingDate).format('YYYY-MM-DD') !== dateStr) return false;
-        if (booking.status === 2 || booking.status === 3) return false; // 忽略被拒绝或取消的预订
         
         // 解析预订的时间段
         const [startTime, endTime] = booking.timeSlot.split('-');
@@ -448,7 +447,6 @@ export default {
       return props.bookings.filter(booking => {
         if (booking.roomId !== roomId) return false;
         if (dayjs(booking.bookingDate).format('YYYY-MM-DD') !== dateStr) return false;
-        if (booking.status === 3) return false; // 忽略已取消的预订
         
         // 解析预订的时间段
         const [startTime, endTime] = booking.timeSlot.split('-');
@@ -799,9 +797,8 @@ export default {
 }
 
 .status-canceled {
-  background-color: #7f8c8d;
-  opacity: 0.7;
-  text-decoration: line-through;
+  background-color: #27ae60;
+  opacity: 1;
 }
 
 .booking-details {

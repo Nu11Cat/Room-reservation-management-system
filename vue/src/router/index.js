@@ -113,6 +113,24 @@ const routes = [
         }
       },
       {
+        path: '/admin/bookings',
+        name: 'AdminBookingManagement',
+        component: () => import('@/components/AdminBookingManagement.vue'),
+        meta: {
+          requiresAuth: true,
+          roles: [1] // 只有管理员可访问
+        }
+      },
+      {
+        path: '/statistics',
+        name: 'StatisticsPage',
+        component: () => import('@/components/StatisticsPage.vue'),
+        meta: {
+          requiresAuth: true,
+          roles: [1] // 只有最高管理员可访问
+        }
+      },
+      {
         path: '/profile',
         name: 'UserProfile',
         component: () => import('@/views/profile/Index.vue'),

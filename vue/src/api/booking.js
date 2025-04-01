@@ -149,7 +149,7 @@ export function getPendingBookings(params) {
  */
 export function approveBooking(data) {
   return request({
-    url: `/bookings/${data.id}/approve`,
+    url: `/approvals/${data.id}`,
     method: 'put',
     data: {
       status: data.status,

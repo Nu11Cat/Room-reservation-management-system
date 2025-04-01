@@ -567,12 +567,12 @@ export default {
 }
 
 .time-slot.rejected {
-  background-color: #f4f4f5;
+  background-color: #e1f3d8;
 }
 
 .time-slot.cancelled {
-  background-color: #f4f4f5;
-  background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, #dcdfe6 5px, #dcdfe6 10px);
+  background-color: #e1f3d8;
+  background-image: none;
 }
 
 .room-disabled {
