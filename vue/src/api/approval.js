@@ -30,6 +30,8 @@ export function getApprovedList(params) {
  * 审批预约
  * @param {Number} id 审批ID
  * @param {Object} data 审批数据
+ * @param {Number} data.status 审批结果，1:批准, 2:拒绝
+ * @param {String} data.comment 审批意见
  * @returns {Promise}
  */
 export function approveBooking(id, data) {

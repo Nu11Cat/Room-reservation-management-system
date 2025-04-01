@@ -16,7 +16,8 @@ export const useUserStore = defineStore('user', {
     
     return {
       token: localStorage.getItem('token') || '',
-      userInfo: userInfo
+      userInfo: userInfo,
+      unreadCount: 0 // 未读通知数量
     };
   },
 
@@ -42,6 +43,7 @@ export const useUserStore = defineStore('user', {
     clearUserInfo() {
       this.token = '';
       this.userInfo = null;
+      this.unreadCount = 0;
       localStorage.removeItem('token');
       localStorage.removeItem('userInfo');
       
@@ -53,6 +55,23 @@ export const useUserStore = defineStore('user', {
     // 登出
     logout() {
       this.clearUserInfo();
+    },
+    
+    // 设置未读通知数量
+    setUnreadCount(count) {
+      this.unreadCount = count;
+    },
+    
+    // 增加未读通知数量
+    incrementUnreadCount() {
+      this.unreadCount++;
+    },
+    
+    // 减少未读通知数量
+    decrementUnreadCount() {
+      if (this.unreadCount > 0) {
+        this.unreadCount--;
+      }
     }
   }
 }); 

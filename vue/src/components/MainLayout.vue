@@ -7,6 +7,7 @@
           <h2>会议室预订系统</h2>
         </div>
         <div class="header-menu">
+          <NotificationIcon />
           <el-dropdown @command="handleCommand">
             <span class="user-dropdown">
               {{ userInfo.username || '用户' }}
@@ -35,10 +36,20 @@
             active-text-color="#409EFF"
           >
             <!-- 管理员菜单 -->
-            <el-menu-item index="/system/user" v-if="hasPermission([1])">
-              <el-icon><User /></el-icon>
-              <template #title>用户管理</template>
-            </el-menu-item>
+            <el-sub-menu index="/system" v-if="hasPermission([1])">
+              <template #title>
+                <el-icon><Setting /></el-icon>
+                <span>系统管理</span>
+              </template>
+              <el-menu-item index="/system/user">
+                <el-icon><User /></el-icon>
+                <span>用户管理</span>
+              </el-menu-item>
+              <el-menu-item index="/system/config">
+                <el-icon><Tools /></el-icon>
+                <span>系统配置</span>
+              </el-menu-item>
+            </el-sub-menu>
             
             <!-- 会议室相关 -->
             <el-sub-menu index="/room">
@@ -58,6 +69,10 @@
               </template>
               <el-menu-item index="/booking/list">预订列表</el-menu-item>
               <el-menu-item index="/booking/calendar">日历视图</el-menu-item>
+              <el-menu-item index="/admin/bookings" v-if="hasPermission([1])">
+                <el-icon><Management /></el-icon>
+                <span>全部预约管理</span>
+              </el-menu-item>
             </el-sub-menu>
             
             <!-- 审批相关 -->
@@ -78,10 +93,10 @@
               <template #title>个人中心</template>
             </el-menu-item>
             
-            <!-- 管理员系统配置 -->
-            <el-menu-item v-if="userInfo.roleId === 1" index="/system/config">
-              <el-icon><Setting /></el-icon>
-              <template #title>系统配置</template>
+            <!-- 统计分析 -->
+            <el-menu-item index="/statistics" v-if="hasPermission([1])">
+              <el-icon><TrendCharts /></el-icon>
+              <span>统计分析</span>
             </el-menu-item>
           </el-menu>
         </el-aside>
@@ -103,8 +118,9 @@
 import { ref, computed, onMounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessageBox } from 'element-plus';
-import { ArrowDown, User, OfficeBuilding, Calendar, Checked, Bell, Setting } from '@element-plus/icons-vue';
+import { ArrowDown, User, OfficeBuilding, Calendar, Checked, Bell, Setting, Tools, Management, TrendCharts } from '@element-plus/icons-vue';
 import { useUserStore } from '@/stores/user';
+import NotificationIcon from '@/components/NotificationIcon.vue';
 
 export default {
   name: 'MainLayout',
@@ -115,7 +131,11 @@ export default {
     Calendar,
     Checked,
     Bell,
-    Setting
+    Setting,
+    Tools,
+    NotificationIcon,
+    Management,
+    TrendCharts
   },
   setup() {
     const router = useRouter();

@@ -1,135 +1,200 @@
 <template>
   <div class="system-config-container">
-    <h2 class="page-title">系统配置</h2>
+    <h1>系统配置</h1>
     
-    <el-card class="config-card">
-      <template #header>
-        <div class="card-header">
-          <span>基础配置</span>
-        </div>
-      </template>
+    <el-form :model="configForm" label-width="180px" class="config-form">
+      <el-divider content-position="left">预约规则配置 (BOOKING_RULE)</el-divider>
       
-      <el-form :model="configForm" label-width="120px">
-        <el-form-item label="系统名称">
-          <el-input v-model="configForm.systemName" placeholder="请输入系统名称" />
-        </el-form-item>
-        
-        <el-form-item label="系统Logo">
-          <el-upload
-            class="logo-uploader"
-            action="#"
-            :auto-upload="false"
-            :show-file-list="false"
-            :on-change="handleLogoChange">
-            <img v-if="logoUrl" :src="logoUrl" class="logo-preview" />
-            <el-icon v-else class="logo-uploader-icon"><Plus /></el-icon>
-          </el-upload>
-          <div class="upload-hint">推荐尺寸: 200x60 像素</div>
-        </el-form-item>
-        
-        <el-divider />
-        
-        <el-form-item label="预订审批">
-          <el-switch v-model="configForm.requireApproval" />
-          <span class="config-hint">开启后，所有会议室预订需要审批</span>
-        </el-form-item>
-        
-        <el-form-item label="预订时间限制">
-          <el-select v-model="configForm.bookingTimeLimit" placeholder="预订时间限制">
-            <el-option label="不限制" value="none" />
-            <el-option label="1天内" value="1day" />
-            <el-option label="3天内" value="3days" />
-            <el-option label="1周内" value="1week" />
-            <el-option label="2周内" value="2weeks" />
-            <el-option label="1个月内" value="1month" />
-          </el-select>
-          <span class="config-hint">限制用户只能预订未来多长时间内的会议室</span>
-        </el-form-item>
-        
-        <el-form-item label="通知设置">
-          <el-checkbox-group v-model="configForm.notificationSettings">
-            <el-checkbox label="email">邮件通知</el-checkbox>
-            <el-checkbox label="sms">短信通知</el-checkbox>
-            <el-checkbox label="system">系统内通知</el-checkbox>
-          </el-checkbox-group>
-        </el-form-item>
-      </el-form>
-    </el-card>
-    
-    <el-card class="config-card">
-      <template #header>
-        <div class="card-header">
-          <span>高级配置</span>
-        </div>
-      </template>
+      <el-form-item label="预约冲突规则配置">
+        <el-input 
+          v-model="configForm.conflictRule" 
+          placeholder="冲突规则配置"
+          :disabled="true"
+        />
+        <div class="rule-desc">是否允许重叠: 否，最小间隔: 30分钟</div>
+      </el-form-item>
       
-      <el-form :model="advancedForm" label-width="120px">
-        <el-form-item label="系统维护模式">
-          <el-switch v-model="advancedForm.maintenanceMode" />
-          <span class="config-hint">开启后，除管理员外的用户将无法访问系统</span>
-        </el-form-item>
-        
-        <el-form-item label="数据备份">
-          <el-button type="primary">立即备份</el-button>
-          <el-button>恢复备份</el-button>
-        </el-form-item>
-        
-        <el-form-item label="缓存清理">
-          <el-button type="warning">清理系统缓存</el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
-    
-    <div class="action-buttons">
-      <el-button>取消</el-button>
-      <el-button type="primary" @click="saveConfig">保存配置</el-button>
-    </div>
+      <el-form-item label="最小预约间隔(分钟)">
+        <el-input-number 
+          v-model="configForm.minInterval" 
+          :min="5" 
+          :max="60" 
+          :step="5"
+          :disabled="true"
+        />
+      </el-form-item>
+      
+      <el-form-item label="最大预约时长(分钟)">
+        <el-input-number 
+          v-model="configForm.maxDuration" 
+          :min="60" 
+          :max="720" 
+          :step="30"
+          :disabled="true"
+        />
+      </el-form-item>
+      
+      <el-divider content-position="left">审批规则配置 (APPROVAL_RULE)</el-divider>
+      
+      <el-form-item label="是否需要审批">
+        <el-switch 
+          v-model="configForm.approvalRequired" 
+          :disabled="true"
+        />
+      </el-form-item>
+      
+      <el-form-item label="是否自动审批">
+        <el-switch 
+          v-model="configForm.autoApprove" 
+          :disabled="true"
+        />
+      </el-form-item>
+      
+      <el-form-item label="审批结果是否邮件通知">
+        <el-switch 
+          v-model="configForm.notifyEmail" 
+          :disabled="true" 
+        />
+      </el-form-item>
+      
+      <el-divider content-position="left">系统参数配置 (SYSTEM_PARAM)</el-divider>
+      
+      <el-form-item label="系统名称">
+        <el-input 
+          v-model="configForm.systemName" 
+          placeholder="系统名称"
+          :disabled="true"
+        />
+      </el-form-item>
+      
+      <el-form-item label="系统Logo">
+        <el-input 
+          v-model="configForm.systemLogo" 
+          placeholder="系统Logo路径"
+          :disabled="true"
+        />
+        <div class="logo-preview">
+          <img src="/static/images/logo.png" alt="系统Logo" height="40" />
+        </div>
+      </el-form-item>
+      
+      <el-form-item label="邮件服务器地址">
+        <el-input 
+          v-model="configForm.emailServer" 
+          placeholder="邮件服务器地址"
+          :disabled="true"
+        />
+      </el-form-item>
+      
+      <el-form-item label="邮件服务器端口">
+        <el-input-number 
+          v-model="configForm.emailPort" 
+          :min="1" 
+          :max="65535"
+          :disabled="true"
+        />
+      </el-form-item>
+      
+      <el-divider content-position="left">通知模板配置 (NOTIFY_TEMPLATE)</el-divider>
+      
+      <el-form-item label="审批提交通知模板">
+        <el-input 
+          type="textarea" 
+          v-model="configForm.approvalTemplate" 
+          :rows="2"
+          :disabled="true"
+        />
+      </el-form-item>
+      
+      <el-form-item label="审批通过通知模板">
+        <el-input 
+          type="textarea" 
+          v-model="configForm.approvedTemplate" 
+          :rows="2"
+          :disabled="true"
+        />
+      </el-form-item>
+      
+      <el-form-item label="审批拒绝通知模板">
+        <el-input 
+          type="textarea" 
+          v-model="configForm.rejectedTemplate" 
+          :rows="2"
+          :disabled="true"
+        />
+      </el-form-item>
+      
+      <el-form-item>
+        <el-button type="primary" disabled>保存配置</el-button>
+        <el-button disabled>重置</el-button>
+        <div class="config-hint">当前为展示模式，暂不支持修改配置</div>
+      </el-form-item>
+    </el-form>
   </div>
 </template>
 
 <script>
-import { ref, reactive } from 'vue';
+import { reactive, ref, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
-import { Plus } from '@element-plus/icons-vue';
 
 export default {
   name: 'SystemConfigPage',
-  components: {
-    Plus
-  },
   setup() {
-    const logoUrl = ref('');
-    
+    const loading = ref(false);
     const configForm = reactive({
-      systemName: '会议室预订系统',
-      requireApproval: true,
-      bookingTimeLimit: '2weeks',
-      notificationSettings: ['email', 'system']
+      // 预约规则配置
+      conflictRule: '{"allowOverlap": false, "minInterval": 30}',
+      minInterval: 15,
+      maxDuration: 480,
+      
+      // 审批规则配置
+      approvalRequired: true,
+      autoApprove: false,
+      notifyEmail: true,
+      
+      // 系统参数配置
+      systemName: '会议室预约管理系统',
+      systemLogo: '/static/images/logo.png',
+      emailServer: 'smtp.example.com',
+      emailPort: 465,
+      
+      // 通知模板配置
+      approvalTemplate: '您的会议室预约申请已提交，等待审批',
+      approvedTemplate: '您的会议室预约申请已通过审批',
+      rejectedTemplate: '您的会议室预约申请未通过审批'
     });
     
-    const advancedForm = reactive({
-      maintenanceMode: false
-    });
-    
-    const handleLogoChange = (file) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        logoUrl.value = e.target.result;
-      };
-      reader.readAsDataURL(file.raw);
+    // 初始化加载配置
+    const loadConfig = () => {
+      loading.value = true;
+      
+      // 使用预设的配置数据（这里是只读展示，无实际API调用）
+      setTimeout(() => {
+        loading.value = false;
+      }, 500);
     };
     
+    // 保存配置
     const saveConfig = () => {
-      ElMessage.success('配置保存成功');
-      // 实际项目中这里应该调用API保存配置
+      // 展示模式下不实际保存
+      ElMessage.info('当前为展示模式，不支持修改配置');
     };
+    
+    // 重置配置
+    const resetConfig = () => {
+      // 展示模式下不实际重置
+      ElMessage.info('当前为展示模式，不支持修改配置');
+    };
+    
+    onMounted(() => {
+      loadConfig();
+    });
     
     return {
-      logoUrl,
+      loading,
       configForm,
-      advancedForm,
-      handleLogoChange,
-      saveConfig
+      saveConfig,
+      resetConfig
     };
   }
 };
@@ -138,66 +203,35 @@ export default {
 <style scoped>
 .system-config-container {
   padding: 20px;
-  max-width: 900px;
+  max-width: 800px;
   margin: 0 auto;
 }
 
-.page-title {
-  margin-bottom: 24px;
-  font-weight: 500;
-  color: #303133;
+.config-form {
+  margin-top: 20px;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
 }
 
-.config-card {
-  margin-bottom: 24px;
+.el-divider {
+  margin: 20px 0;
 }
 
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.logo-uploader {
-  width: 200px;
-  height: 60px;
-  border: 1px dashed #d9d9d9;
-  border-radius: 6px;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.logo-uploader:hover {
-  border-color: #409EFF;
-}
-
-.logo-uploader-icon {
-  font-size: 28px;
-  color: #8c939d;
-}
-
-.logo-preview {
-  max-width: 100%;
-  max-height: 100%;
-}
-
-.upload-hint, .config-hint {
+.rule-desc {
   font-size: 12px;
   color: #909399;
   margin-top: 5px;
 }
 
-.config-hint {
-  margin-left: 10px;
+.logo-preview {
+  margin-top: 10px;
 }
 
-.action-buttons {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 20px;
+.config-hint {
+  font-size: 12px;
+  color: #e6a23c;
+  margin-top: 10px;
 }
 </style> 

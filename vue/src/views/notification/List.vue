@@ -226,19 +226,19 @@ export default {
     // 获取类型对应的标签类型
     const getTypeTag = (type) => {
       switch (Number(type)) {
-        case 0: return '';        // 系统通知
-        case 1: return 'info';    // 预订通知
-        case 2: return 'success'; // 审批通知
-        default: return '';
+        case 1: return 'warning';   // 预约状态变更
+        case 2: return 'primary';   // 预约提醒
+        case 3: return 'success';   // 系统公告
+        default: return 'info';     // 默认
       }
     };
     
     // 获取类型对应的文本
     const getTypeText = (type) => {
       switch (Number(type)) {
-        case 0: return '系统通知';
-        case 1: return '预订通知';
-        case 2: return '审批通知';
+        case 1: return '预约状态变更';
+        case 2: return '预约提醒';
+        case 3: return '系统公告';
         default: return '未知类型';
       }
     };
@@ -259,27 +259,25 @@ export default {
           pageSize: pageSize.value
         };
         
-        // 根据不同标签页设置不同参数
-        if (activeTab.value === 'unread') {
-          params.is_read = 0;
-        } else {
-          // 全部通知标签页，默认不设置is_read过滤
-          if (typeFilter.value !== '') {
-            params.type = typeFilter.value;
-          }
-          // 只在明确选择已读状态时才设置
-          if (readFilter.value !== '') {
-            params.is_read = readFilter.value;
-          }
+        if (typeFilter.value) {
+          params.type = typeFilter.value;
         }
         
-        // 打印请求参数用于调试
-        console.log('请求参数:', params);
+        if (activeTab.value === 'unread') {
+          params.is_read = 0;
+          console.log('设置is_read=0筛选未读通知');
+        } else if (readFilter.value !== '') {
+          // 全部通知标签页，根据过滤条件设置is_read
+          params.is_read = readFilter.value;
+          console.log(`根据筛选设置is_read=${readFilter.value}`);
+        }
         
-        // 关键词搜索
         if (searchInput.value) {
           params.keyword = searchInput.value;
         }
+        
+        console.log('请求参数:', params);
+        console.log('请求URL: /notification');
         
         const res = await getNotificationList(params);
         console.log('API原始返回:', res);

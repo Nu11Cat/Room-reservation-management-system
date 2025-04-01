@@ -50,4 +50,48 @@ export function logout() {
     url: '/user/logout',
     method: 'post'
   });
+}
+
+// 获取所有用户
+export function getAllUsers(params) {
+  return request({
+    url: '/user/users',
+    method: 'get',
+    params
+  });
+}
+
+// 获取指定用户
+export function getUserById(id) {
+  return request({
+    url: '/user/getById',
+    method: 'get',
+    params: { id }
+  });
+}
+
+// 添加用户
+export function addUser(data) {
+  return request({
+    url: '/user/add',
+    method: 'post',
+    data
+  });
+}
+
+// 修改指定用户
+export function editUser(data) {
+  return request({
+    url: '/user/editById',
+    method: 'put',
+    data
+  });
+}
+
+// 禁用或启用用户
+export function banUser(id) {
+  return request({
+    url: `/user/ban/${id}`,
+    method: 'delete'
+  });
 } 
