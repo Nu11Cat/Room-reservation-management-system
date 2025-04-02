@@ -23,7 +23,7 @@ public interface NotificationMapper {
      * 标记通知已读
      * @param id
      */
-    @Update("update notification set is_read = 1")
+    @Update("update notification set is_read = 1 where id = #{id}")
     void readNotifications(Integer id);
 
     /**

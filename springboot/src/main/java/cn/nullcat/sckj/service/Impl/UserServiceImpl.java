@@ -1,11 +1,13 @@
 package cn.nullcat.sckj.service.Impl;
 
+import cn.nullcat.sckj.annotation.LogOperation;
 import cn.nullcat.sckj.mapper.UserMapper;
 import cn.nullcat.sckj.pojo.Booking;
 import cn.nullcat.sckj.pojo.PageBean;
 import cn.nullcat.sckj.pojo.User;
 import cn.nullcat.sckj.service.UserService;
 import cn.nullcat.sckj.utils.TokenUtils;
+import cn.nullcat.sckj.websocket.NotificationWebSocket;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,6 +75,7 @@ public class UserServiceImpl implements UserService {
      * @param user
      */
     @Override
+    @LogOperation(module = "用户管理", operation = "更新个人信息/密码", description = "更新个人信息/密码")
     public void update(User user) {
         if(user.getPassword()==null) {
             userMapper.updateInfo(user);
@@ -88,6 +91,7 @@ public class UserServiceImpl implements UserService {
      * @param user
      */
     @Override
+    @LogOperation(module = "用户管理", operation = "注册用户", description = "注册用户")
     public void register(User user) {
         user.setAvatar("");
         user.setCreateTime(new Date());
@@ -125,10 +129,11 @@ public class UserServiceImpl implements UserService {
      * @return
      */
     @Override
+    @LogOperation(module = "用户管理", operation = "获取全部用户信息", description = "获取全部用户信息")
     public PageBean getAllUsers(Integer page, Integer pageSize) {
         PageHelper.startPage(page, pageSize);
-        List<Booking> list = userMapper.getAllUsers();
-        Page<Booking> p = (Page<Booking>) list;
+        List<User> list = userMapper.getAllUsers();
+        Page<User> p = (Page<User>) list;
 
         PageBean pageBean = new PageBean(p.getTotal(), p.getResult());
         return pageBean;
@@ -139,6 +144,7 @@ public class UserServiceImpl implements UserService {
      * @param user
      */
     @Override
+    @LogOperation(module = "用户管理", operation = "添加用户", description = "添加用户")
     public void add(User user) {
         user.setCreateTime(new Date());
         user.setUpdateTime(new Date());
@@ -153,11 +159,22 @@ public class UserServiceImpl implements UserService {
      * @param id
      */
     @Override
+    @LogOperation(module = "用户管理", operation = "封禁/解封用户", description = "封禁/解封用户")
     public void banOrUnseal(Integer id) {
-        if(userMapper.getById(id).getStatus()==1) {
+        if (userMapper.getById(id).getStatus() == 1) {
             userMapper.banById(id);
-        }else{
+            // 添加WebSocket通知
+            NotificationWebSocket.sendBanNotification(id, "您的账号已被管理员禁用");
+            // 清除用户Redis缓存和Token
+            tokenUtils.removeToken(id);
+            tokenUtils.removeUserInfo(id);
+        } else {
             userMapper.unsealById(id);
         }
+    }
+
+    @Override
+    public Integer getStatusById(Integer userId) {
+        return userMapper.getStatusById(userId);
     }
 }

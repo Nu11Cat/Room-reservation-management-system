@@ -1,5 +1,6 @@
 package cn.nullcat.sckj.service.Impl;
 
+import cn.nullcat.sckj.annotation.LogOperation;
 import cn.nullcat.sckj.mapper.ApprovalsMapper;
 import cn.nullcat.sckj.mapper.BookingsMapper;
 import cn.nullcat.sckj.pojo.Approval;
@@ -47,6 +48,7 @@ public class ApprovalsServiceImpl implements ApprovalsService {
      * @param approval
      */
     @Override
+    @LogOperation(module = "预约管理", operation = "审批预约", description = "审批预约")
     public void approval(Approval approval) {
         approvalsMapper.approval(approval);
         Long bookingId = approvalsMapper.getBookingId(approval.getId());

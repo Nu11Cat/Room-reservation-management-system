@@ -27,7 +27,7 @@
                 AND location LIKE CONCAT('%', #{location}, '%')
             </if>
             <if test="capacity != null">
-                AND capacity = #{capacity}
+                AND capacity &gt; #{capacity}
             </if>
             <if test="status != null">
                 AND status = #{status}

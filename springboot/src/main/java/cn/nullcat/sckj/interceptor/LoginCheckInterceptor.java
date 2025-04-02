@@ -52,6 +52,13 @@ public class LoginCheckInterceptor implements HandlerInterceptor{
              //
             // 6. 获取用户信息（包含角色ID）
             User user = tokenUtils.getUserInfo(userId);
+            // 检查用户状态，如果被封禁则拒绝访问
+            if (user.getStatus() != null && user.getStatus() == 0) {
+                Result error = Result.error("USER_BANNED");
+                String banned = JSONObject.toJSONString(error);
+                rep.getWriter().write(banned);
+                return false;
+            }
             if (user == null) {
                 Result error = Result.error("NOT_LOGIN");
                 String notLogin = JSONObject.toJSONString(error);

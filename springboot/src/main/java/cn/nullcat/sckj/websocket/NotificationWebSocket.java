@@ -122,4 +122,21 @@ public class NotificationWebSocket {
         }
         log.info("群发通知完成: {}", notification.getTitle());
     }
+    /**
+     * 发送用户封禁通知
+     */
+    public static void sendBanNotification(Integer userId, String reason) {
+        NotificationWebSocket webSocket = clients.get(userId);
+        if (webSocket != null) {
+            try {
+                Map<String, Object> message = Map.of(
+                        "type", "user_banned",
+                        "data", Map.of("reason", reason)
+                );
+                webSocket.session.getBasicRemote().sendText(JSON.toJSONString(message));
+            } catch (IOException e) {
+                log.error("发送封禁通知失败", e);
+            }
+        }
+    }
 }

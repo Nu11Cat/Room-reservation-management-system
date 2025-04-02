@@ -23,4 +23,6 @@ public interface UserService {
     void add(User user);
 
     void banOrUnseal(Integer id);
+
+    Integer getStatusById(Integer userId);
 }

@@ -1,5 +1,6 @@
 package cn.nullcat.sckj.controller;
 
+import cn.nullcat.sckj.annotation.LogOperation;
 import cn.nullcat.sckj.annotation.RequirePermission;
 import cn.nullcat.sckj.pojo.Notification;
 import cn.nullcat.sckj.pojo.PageBean;
@@ -68,6 +69,7 @@ public class NotificationController {
      * @return
      */
     @PostMapping("/send")
+    @LogOperation(module = "通知管理", operation = "发布通知", description = "发布通知")
     @RequirePermission("notification:send")
     public Result send(@RequestBody Notification notification) {
         notificationService.sendNotification(notification);

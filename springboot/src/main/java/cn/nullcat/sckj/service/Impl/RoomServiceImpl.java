@@ -1,5 +1,6 @@
 package cn.nullcat.sckj.service.Impl;
 
+import cn.nullcat.sckj.annotation.LogOperation;
 import cn.nullcat.sckj.mapper.RoomMapper;
 import cn.nullcat.sckj.pojo.PageBean;
 import cn.nullcat.sckj.pojo.Room;
@@ -53,6 +54,7 @@ public class RoomServiceImpl implements RoomService {
      * @param room
      */
     @Override
+    @LogOperation(module = "会议室管理", operation = "添加会议室", description = "添加会议室")
     public void addRoom(Room room) {
         room.setStatus(1);
         room.setCreateTime(new Date());
@@ -66,6 +68,7 @@ public class RoomServiceImpl implements RoomService {
      * @param room
      */
     @Override
+    @LogOperation(module = "会议室管理", operation = "更新会议室信息", description = "更新会议室信息")
     public void updateRoom(Room room) {
         roomMapper.updateRoom(room);
     }
@@ -75,6 +78,7 @@ public class RoomServiceImpl implements RoomService {
      * @param id
      */
     @Override
+    @LogOperation(module = "会议室管理", operation = "删除会议室", description = "删除会议室")
     public void deleteById(Integer id) {
         roomMapper.deleteById(id);
     }

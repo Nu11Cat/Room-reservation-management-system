@@ -1,5 +1,6 @@
 package cn.nullcat.sckj.service.Impl;
 
+import cn.nullcat.sckj.annotation.LogOperation;
 import cn.nullcat.sckj.exception.BusinessException;
 import cn.nullcat.sckj.mapper.ApprovalsMapper;
 import cn.nullcat.sckj.mapper.BookingsMapper;
@@ -98,6 +99,7 @@ public class BookingsServiceImpl implements BookingsService {
      * @param booking
      */
     @Override
+    @LogOperation(module = "预约管理", operation = "新增预约", description = "新增预约")
     public void addBooking(Booking booking) {
         // 1. 设置初始状态
         booking.setStatus(0);  // 待审批状态
@@ -120,6 +122,7 @@ public class BookingsServiceImpl implements BookingsService {
      * @param booking
      */
     @Override
+    @LogOperation(module = "预约管理", operation = "修改预约", description = "修改预约")
     public void updateBooking(Booking booking) {
         if (hasConflict(booking.getRoomId(), booking.getStartTime(), booking.getEndTime(), booking.getId())) {
             throw new BusinessException("该时间段已被预约");
@@ -132,6 +135,7 @@ public class BookingsServiceImpl implements BookingsService {
      * @param id
      */
     @Override
+    @LogOperation(module = "预约管理", operation = "取消预约", description = "取消预约")
     public void cancelBooking(Integer id) {
         bookingsMapper.cancelBooking(id);
     }

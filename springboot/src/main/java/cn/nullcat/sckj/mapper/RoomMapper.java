@@ -45,7 +45,8 @@ public interface RoomMapper {
             "equipment = #{equipment}," +
             "description = #{description}," +
             "status = #{status}," +
-            "update_time = NOW()")
+            "update_time = NOW()" +
+            "where id = #{id}")
     void updateRoom(Room room);
 
     /**

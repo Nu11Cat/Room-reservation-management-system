@@ -1,5 +1,6 @@
 package cn.nullcat.sckj.service.Impl;
 
+import cn.nullcat.sckj.annotation.LogOperation;
 import cn.nullcat.sckj.mapper.SystemConfigMapper;
 import cn.nullcat.sckj.pojo.SystemConfig;
 import cn.nullcat.sckj.service.SystemConfigService;
@@ -74,6 +75,7 @@ public class SystemConfigServiceImpl implements SystemConfigService {
      * @param systemConfig
      */
     @Override
+    @LogOperation(module = "系统管理", operation = "修改系统配置", description = "修改系统配置")
     public void putConfig(SystemConfig systemConfig) {
         // 1. 更新MySQL
         systemConfigMapper.putConfig(systemConfig);
