@@ -38,4 +38,5 @@ public class StatisticsController {
         List<RoomUsageDTO> data = statisticsService.getRoomUsageStatistics(startDate, endDate);
         return Result.success(data);
     }
+
 }

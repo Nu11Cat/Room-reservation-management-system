@@ -67,8 +67,8 @@ public interface UserMapper {
      * 获取全部用户信息
      * @return
      */
-    @Select("select id, username, real_name, email, phone, status, create_time, update_time from user")
-    List<Booking> getAllUsers();
+    @Select("select id, username, real_name, email, phone,role_id, status, create_time, update_time from user")
+    List<User> getAllUsers();
 
     /**
      * 封禁用户
@@ -90,4 +90,12 @@ public interface UserMapper {
      */
     @Select("select id from user")
     List<Long> getAllUserIds();
+
+    /**
+     *
+     * @param userId
+     * @return
+     */
+    @Select("select status from user where id = #{userId}")
+    Integer getStatusById(Integer userId);
 }

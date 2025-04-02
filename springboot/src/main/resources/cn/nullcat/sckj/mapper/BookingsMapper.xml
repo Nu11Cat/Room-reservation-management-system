@@ -6,35 +6,39 @@
 
     <select id="getBookings" resultType="cn.nullcat.sckj.pojo.Booking">
         SELECT
-        id,
-        room_id,
-        user_id,
-        title,
-        start_time,
-        end_time,
-        attendees,
-        description,
-        status,
-        create_time,
-        update_time,
-        is_deleted
-        FROM booking
+        b.id,
+        b.room_id,
+        b.user_id,
+        b.title,
+        b.start_time,
+        b.end_time,
+        b.attendees,
+        b.description,
+        b.status,
+        b.create_time,
+        b.update_time,
+        b.is_deleted,
+        r.name as roomName,
+        u.username as userName
+        FROM booking b
+        LEFT JOIN room r ON b.room_id = r.id
+        LEFT JOIN user u ON b.user_id = u.id
         <where>
-            is_deleted = 0
+            b.is_deleted = 0
             <if test="roomId != null">
-                AND room_id = #{roomId}
+                AND b.room_id = #{roomId}
             </if>
             <if test="userId != null">
-                AND user_id = #{userId}
+                AND b.user_id = #{userId}
             </if>
             <if test="status != null">
-                AND status = #{status}
+                AND b.status = #{status}
             </if>
             <if test="begin != null and end != null">
-                AND start_time BETWEEN #{begin} AND #{end}
+                AND b.start_time BETWEEN #{begin} AND #{end}
             </if>
         </where>
-        ORDER BY create_time DESC
+        ORDER BY b.create_time DESC
     </select>
 
     <select id="findConflictingBookings" resultType="cn.nullcat.sckj.pojo.Booking">

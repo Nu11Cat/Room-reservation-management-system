@@ -41,6 +41,13 @@ public class UserController {
             return Result.error("密码错误");
         }
         Integer userId = userservice.getUserIdByUsername(user.getUsername()); // 根据用户名获取用户 ID
+        Integer status = userservice.getStatusById(userId);
+        if(status == 0) { //根据id查询封禁状态
+            tokenUtils.removeToken(userId);
+            tokenUtils.removeUserInfo(userId);
+            return Result.error("你的账号已被封禁，无法登录");
+
+        }
         //生成令牌并下发
         Map<String,Object> claims = new HashMap<>();
         claims.put("userId",userId);

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.nullcat.sckj.mapper.OperationLogMapper">
+
+
+    <select id="getOperationLogs" resultType="cn.nullcat.sckj.pojo.OperationLog">
+        SELECT
+        l.id,
+        l.user_id AS userId,
+        u.username AS userName,
+        l.module,
+        l.operation,
+        l.description,
+        l.ip,
+        l.create_time AS createTime
+        FROM operation_log l
+        LEFT JOIN user u ON l.user_id = u.id
+        WHERE l.is_deleted = 0
+        <if test="userId != null">
+            AND l.user_id = #{userId}
+        </if>
+        <if test="module != null and module != ''">
+            AND l.module = #{module}
+        </if>
+        <if test="operation != null and operation != ''">
+            AND l.operation = #{operation}
+        </if>
+        <if test="startTime != null">
+            AND l.create_time &gt;= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND l.create_time &lt;= #{endTime}
+        </if>
+        ORDER BY l.create_time DESC
+    </select>
+</mapper>
