@@ -15,10 +15,11 @@
         style="width: 200px"
       />
       <el-select v-model="searchParams.capacity" placeholder="容纳人数" clearable style="width: 200px">
-        <el-option label="10人以下" :value="10" />
-        <el-option label="10-20人" :value="20" />
-        <el-option label="20-50人" :value="50" />
-        <el-option label="50人以上" :value="100" />
+        <el-option label=">10人" :value="10" />
+        <el-option label=">20人" :value="20" />
+        <el-option label=">30人" :value="30" />
+        <el-option label=">50人" :value="50" />
+        <el-option label=">100人" :value="100" />
       </el-select>
       <el-select v-model="searchParams.status" placeholder="会议室状态" clearable style="width: 200px">
         <el-option label="可用" :value="1" />

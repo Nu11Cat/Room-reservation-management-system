@@ -4,7 +4,7 @@ const webpack = require('webpack')
 module.exports = defineConfig({
   transpileDependencies: true,
   devServer: {
-    port: 8080
+    port: 8081
   },
   configureWebpack: {
     resolve: {

@@ -1,6 +1,7 @@
 import { useUserStore } from '@/stores/user';
 import config from '@/config';
 import { ElMessage } from 'element-plus';
+import router from '@/router';
 
 class WebSocketService {
   constructor() {
@@ -67,6 +68,26 @@ class WebSocketService {
               duration: 5000,
               showClose: true
             });
+          } else if (message.type === 'user_banned') {
+            // 处理用户被封禁的消息
+            const userStore = useUserStore();
+            
+            // 显示封禁通知
+            ElMessage({
+              type: 'error',
+              message: message.data.reason || '您的账号已被管理员禁用',
+              duration: 0,
+              showClose: true
+            });
+            
+            // 登出用户
+            userStore.logout();
+            
+            // 跳转到登录页
+            router.push('/login');
+            
+            // 关闭WebSocket连接
+            this.close();
           }
         } catch (error) {
           console.error('解析WebSocket消息失败: ', error);

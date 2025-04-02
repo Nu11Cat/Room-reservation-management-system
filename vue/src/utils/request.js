@@ -2,6 +2,7 @@ import axios from 'axios'
 import { ElMessage } from 'element-plus';
 import router from '@/router';
 import config from '@/config';
+import { useUserStore } from '@/stores/user';
 
 // 创建axios实例
 const service = axios.create({
@@ -39,6 +40,16 @@ service.interceptors.response.use(
   },
   error => {
     if (error.response) {
+      // 检查是否为用户封禁错误
+      if (error.response.data && error.response.data.msg === 'USER_BANNED') {
+        ElMessage.error('您的账号已被禁用');
+        // 清除用户信息
+        const userStore = useUserStore();
+        userStore.logout();
+        router.push('/login');
+        return Promise.reject(error);
+      }
+      
       switch (error.response.status) {
         case 401:
           // token过期或未登录

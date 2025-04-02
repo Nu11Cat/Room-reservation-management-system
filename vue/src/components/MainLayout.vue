@@ -49,6 +49,10 @@
                 <el-icon><Tools /></el-icon>
                 <span>系统配置</span>
               </el-menu-item>
+              <el-menu-item index="/system/logs">
+                <el-icon><Document /></el-icon>
+                <span>操作日志</span>
+              </el-menu-item>
             </el-sub-menu>
             
             <!-- 会议室相关 -->
@@ -118,9 +122,10 @@
 import { ref, computed, onMounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessageBox } from 'element-plus';
-import { ArrowDown, User, OfficeBuilding, Calendar, Checked, Bell, Setting, Tools, Management, TrendCharts } from '@element-plus/icons-vue';
+import { ArrowDown, User, OfficeBuilding, Calendar, Checked, Bell, Setting, Tools, Management, TrendCharts, Document } from '@element-plus/icons-vue';
 import { useUserStore } from '@/stores/user';
 import NotificationIcon from '@/components/NotificationIcon.vue';
+import { getUnreadCount } from '@/api/notification';
 
 export default {
   name: 'MainLayout',
@@ -135,7 +140,8 @@ export default {
     Tools,
     NotificationIcon,
     Management,
-    TrendCharts
+    TrendCharts,
+    Document
   },
   setup() {
     const router = useRouter();
@@ -171,9 +177,24 @@ export default {
       }
     };
     
+    // 获取未读通知数量
+    const updateUnreadCount = async () => {
+      try {
+        const res = await getUnreadCount();
+        if (res.code === 1) {
+          userStore.setUnreadCount(res.data);
+        }
+      } catch (error) {
+        console.error('获取未读通知数量失败:', error);
+      }
+    };
+    
     onMounted(async () => {
       // 延迟执行，减少ResizeObserver错误
       await nextTick();
+      
+      // 获取未读通知数量
+      updateUnreadCount();
     });
     
     return {
