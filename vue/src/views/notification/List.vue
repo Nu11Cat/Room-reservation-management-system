@@ -2,6 +2,11 @@
   <div class="notification-container">
     <div class="page-header">
       <h1>通知中心</h1>
+      <div>
+        <el-button type="primary" @click="handlePublish" v-if="hasPermission([1])">
+          <el-icon><Plus /></el-icon>发布通知
+        </el-button>
+      </div>
     </div>
     
     <el-card class="tabs-card">
@@ -190,16 +195,87 @@
         </div>
       </div>
     </el-dialog>
+    
+    <!-- 发布通知对话框 -->
+    <el-dialog 
+      v-model="publishVisible" 
+      title="发布通知" 
+      width="600px"
+      destroy-on-close
+    >
+      <el-form :model="publishForm" :rules="publishRules" ref="publishFormRef" label-width="100px">
+        <el-form-item label="接收者类型" prop="receiverType">
+          <el-radio-group v-model="publishForm.receiverType">
+            <el-radio :label="0">指定用户</el-radio>
+            <el-radio :label="1">指定角色</el-radio>
+            <el-radio :label="2">所有用户</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        
+        <el-form-item label="接收用户" prop="receiverId" v-if="publishForm.receiverType === 0">
+          <el-select v-model="publishForm.receiverId" placeholder="请选择接收用户" filterable>
+            <el-option 
+              v-for="user in userList" 
+              :key="user.id" 
+              :label="user.username" 
+              :value="user.id">
+            </el-option>
+          </el-select>
+        </el-form-item>
+        
+        <el-form-item label="接收角色" prop="roleId" v-if="publishForm.receiverType === 1">
+          <el-select v-model="publishForm.roleId" placeholder="请选择接收角色">
+            <el-option :label="'管理员'" :value="1"></el-option>
+            <el-option :label="'普通用户'" :value="2"></el-option>
+            <el-option :label="'审批员'" :value="3"></el-option>
+          </el-select>
+        </el-form-item>
+        
+        <el-form-item label="通知类型" prop="type">
+          <el-select v-model="publishForm.type" placeholder="请选择通知类型">
+            <el-option :label="'系统公告'" :value="3"></el-option>
+            <el-option :label="'预约状态变更'" :value="1"></el-option>
+            <el-option :label="'预约提醒'" :value="2"></el-option>
+          </el-select>
+        </el-form-item>
+        
+        <el-form-item label="通知标题" prop="title">
+          <el-input v-model="publishForm.title" placeholder="请输入通知标题"></el-input>
+        </el-form-item>
+        
+        <el-form-item label="通知内容" prop="content">
+          <el-input 
+            v-model="publishForm.content" 
+            type="textarea" 
+            :rows="5" 
+            placeholder="请输入通知内容">
+          </el-input>
+        </el-form-item>
+      </el-form>
+      
+      <template #footer>
+        <el-button @click="publishVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitPublish" :loading="submitting">
+          发布
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import { ref, onMounted, watch } from 'vue';
 import { ElMessage } from 'element-plus';
-import { getNotificationList, markNotificationRead } from '@/api/notification';
+import { getNotificationList, markNotificationRead, sendNotification } from '@/api/notification';
+import { getUsers } from '@/api/user';
+import { useUserStore } from '@/stores/user';
+import { Plus } from '@element-plus/icons-vue';
 
 export default {
   name: 'NotificationList',
+  components: {
+    Plus
+  },
   setup() {
     // 基础数据
     const loading = ref(false);
@@ -216,6 +292,57 @@ export default {
     // 详情相关
     const detailVisible = ref(false);
     const selectedNotification = ref(null);
+    
+    // 发布通知相关
+    const publishVisible = ref(false);
+    const publishFormRef = ref(null);
+    const submitting = ref(false);
+    const userList = ref([]);
+    
+    const publishForm = ref({
+      receiverType: 2,  // 默认为所有用户
+      receiverId: null,
+      roleId: null,
+      type: 3,          // 默认为系统公告
+      title: '',
+      content: ''
+    });
+    
+    const publishRules = ref({
+      title: [
+        { required: true, message: '请输入通知标题', trigger: 'blur' },
+        { min: 2, max: 50, message: '标题长度在2-50个字符之间', trigger: 'blur' }
+      ],
+      content: [
+        { required: true, message: '请输入通知内容', trigger: 'blur' },
+        { min: 5, max: 500, message: '内容长度在5-500个字符之间', trigger: 'blur' }
+      ],
+      receiverId: [
+        { required: true, message: '请选择接收用户', trigger: 'change', 
+          validator: (rule, value, callback) => {
+            if (publishForm.value.receiverType === 0 && !value) {
+              callback(new Error('请选择接收用户'));
+            } else {
+              callback();
+            }
+          }
+        }
+      ],
+      roleId: [
+        { required: true, message: '请选择接收角色', trigger: 'change',
+          validator: (rule, value, callback) => {
+            if (publishForm.value.receiverType === 1 && !value) {
+              callback(new Error('请选择接收角色'));
+            } else {
+              callback();
+            }
+          }
+        }
+      ],
+      type: [
+        { required: true, message: '请选择通知类型', trigger: 'change' }
+      ]
+    });
     
     // 监听标签页变化
     watch(activeTab, () => {
@@ -363,6 +490,9 @@ export default {
         
         if (res.code === 1) {
           ElMessage.success('已标记为已读');
+          // 更新未读通知计数
+          const userStore = useUserStore();
+          userStore.decrementUnreadCount();
           // 重新加载通知列表
           loadNotifications();
         } else {
@@ -388,6 +518,9 @@ export default {
           ElMessage.success('已标记为已读');
           // 更新状态
           selectedNotification.value.is_read = 1;
+          // 更新未读通知计数
+          const userStore = useUserStore();
+          userStore.decrementUnreadCount();
           // 重新加载通知列表
           loadNotifications();
         } else {
@@ -413,6 +546,69 @@ export default {
       loadNotifications();
     };
     
+    // 加载用户列表
+    const loadUsers = async () => {
+      try {
+        const res = await getUsers();
+        if (res.code === 1 && res.data) {
+          userList.value = res.data;
+        } else {
+          console.error('获取用户列表失败:', res);
+        }
+      } catch (error) {
+        console.error('获取用户列表出错:', error);
+      }
+    };
+    
+    // 处理发布通知点击
+    const handlePublish = () => {
+      loadUsers();
+      publishVisible.value = true;
+    };
+    
+    // 提交发布通知
+    const submitPublish = () => {
+      publishFormRef.value.validate(async (valid) => {
+        if (valid) {
+          submitting.value = true;
+          try {
+            const res = await sendNotification(publishForm.value);
+            if (res.code === 1) {
+              ElMessage.success('通知发布成功');
+              publishVisible.value = false;
+              // 重置表单
+              publishForm.value = {
+                receiverType: 2,
+                receiverId: null,
+                roleId: null,
+                type: 3,
+                title: '',
+                content: ''
+              };
+              // 刷新通知列表
+              loadNotifications();
+            } else {
+              ElMessage.error(res.msg || '发布失败，请重试');
+            }
+          } catch (error) {
+            console.error('发布通知出错:', error);
+            ElMessage.error('发布失败，请重试');
+          } finally {
+            submitting.value = false;
+          }
+        } else {
+          ElMessage.warning('请填写完整的通知信息');
+        }
+      });
+    };
+    
+    // 检查权限
+    const userStore = useUserStore();
+    const hasPermission = (roles) => {
+      if (!userStore.userInfo || !userStore.userInfo.roleId) return false;
+      return roles.includes(userStore.userInfo.roleId);
+    };
+    
     onMounted(() => {
       loadNotifications();
     });
@@ -430,7 +626,12 @@ export default {
       allList,
       detailVisible,
       selectedNotification,
-      
+      publishVisible,
+      publishForm,
+      publishRules,
+      publishFormRef,
+      submitting,
+      userList,
       getTypeTag,
       getTypeText,
       formatDateTime,
@@ -441,7 +642,11 @@ export default {
       handleMarkRead,
       handleMarkDetailRead,
       handleSizeChange,
-      handleCurrentChange
+      handleCurrentChange,
+      handlePublish,
+      submitPublish,
+      hasPermission,
+      Plus
     };
   }
 };
@@ -457,6 +662,10 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+}
+
+.page-header h1 {
+  margin: 0;
 }
 
 .tabs-card {

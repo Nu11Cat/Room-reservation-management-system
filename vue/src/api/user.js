@@ -94,4 +94,12 @@ export function banUser(id) {
     url: `/user/ban/${id}`,
     method: 'delete'
   });
+}
+
+// 获取用户简单列表（不分页）
+export function getUsers() {
+  return request({
+    url: '/user/list',
+    method: 'get'
+  });
 } 

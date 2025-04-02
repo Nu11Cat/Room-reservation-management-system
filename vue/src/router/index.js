@@ -138,6 +138,16 @@ const routes = [
           requiresAuth: true,
           roles: [1, 2, 3] // 所有角色都可访问
         }
+      },
+      {
+        path: '/system/logs',
+        name: 'LogManagement',
+        component: () => import('@/views/system/LogManagement.vue'),
+        meta: {
+          requiresAuth: true,
+          roles: [1], // 只有最高管理员可访问
+          title: '操作日志'
+        }
       }
     ]
   },

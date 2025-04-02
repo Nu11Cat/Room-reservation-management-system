@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import { watch } from 'vue';
+import { watch, onMounted } from 'vue';
 import { useUserStore } from '@/stores/user';
 import websocketService from '@/services/websocket';
 import { getUnreadCount } from '@/api/notification';
@@ -16,12 +16,27 @@ export default {
   setup() {
     const userStore = useUserStore();
 
+    // 更新未读通知数量
+    const updateUnreadCount = async () => {
+      try {
+        const res = await getUnreadCount();
+        if (res.code === 1) {
+          userStore.setUnreadCount(res.data);
+        }
+      } catch (error) {
+        console.error('获取未读通知数量失败:', error);
+      }
+    };
+
     // 监听用户登录状态
     watch(() => userStore.token, (newToken) => {
       if (newToken) {
         // 用户已登录，初始化WebSocket连接
         console.log('用户已登录，初始化WebSocket连接');
         websocketService.connect();
+        
+        // 获取未读通知数量
+        updateUnreadCount();
       } else {
         // 用户已登出，关闭WebSocket连接
         console.log('用户已登出，关闭WebSocket连接');
@@ -43,22 +58,15 @@ export default {
       });
     });
 
-    // 更新未读通知数量
-    const updateUnreadCount = async () => {
-      try {
-        const res = await getUnreadCount();
-        if (res.code === 1) {
-          userStore.setUnreadCount(res.data);
-        }
-      } catch (error) {
-        console.error('获取未读通知数量失败:', error);
+    // 初始化时检查并加载
+    onMounted(() => {
+      // 初始状态检查
+      if (userStore.token) {
+        websocketService.connect();
+        // 主动获取一次未读通知数量
+        updateUnreadCount();
       }
-    };
-
-    // 初始状态检查
-    if (userStore.token) {
-      websocketService.connect();
-    }
+    });
 
     return {};
   }
