@@ -28,4 +28,120 @@
         ORDER BY
             bookingCount DESC
     </select>
+    
+    <!-- 预订状态统计 -->
+    <select id="getBookingStatusStatistics" resultType="cn.nullcat.sckj.pojo.DTO.BookingStatusDTO">
+        SELECT
+            status,
+            CASE
+                WHEN status = 0 THEN '待审批'
+                WHEN status = 1 THEN '已通过'
+                WHEN status = 2 THEN '已拒绝'
+                WHEN status = 3 THEN '已取消'
+                ELSE '未知状态'
+            END AS statusName,
+            COUNT(*) AS count,
+            ROUND(COUNT(*) * 100.0 / (
+                SELECT COUNT(*) FROM booking 
+                WHERE start_time BETWEEN #{startDate} AND #{endDate}
+                AND is_deleted = 0
+            ), 2) AS percentage
+        FROM
+            booking
+        WHERE
+            start_time BETWEEN #{startDate} AND #{endDate}
+            AND is_deleted = 0
+        GROUP BY
+            status
+        ORDER BY
+            status ASC
+    </select>
+    
+    <!-- 用户预订排名 -->
+    <select id="getUserBookingRanking" resultType="cn.nullcat.sckj.pojo.DTO.UserRankingDTO">
+        SELECT
+            u.id AS userId,
+            u.username,
+            u.real_name AS realName,
+            COUNT(b.id) AS bookingCount
+        FROM
+            user u
+            LEFT JOIN booking b ON u.id = b.user_id
+                AND b.status = 1
+                AND b.start_time BETWEEN #{startDate} AND #{endDate}
+                AND b.is_deleted = 0
+        WHERE
+            u.is_deleted = 0
+        GROUP BY
+            u.id, u.username, u.real_name
+        ORDER BY
+            bookingCount DESC
+        LIMIT #{limit}
+    </select>
+    
+    <!-- 会议时长统计 -->
+    <select id="getMeetingDurationStatistics" resultType="cn.nullcat.sckj.pojo.DTO.MeetingDurationDTO">
+        SELECT
+            CASE
+                WHEN TIMESTAMPDIFF(HOUR, start_time, end_time) &lt; 1 THEN '不到1小时'
+                WHEN TIMESTAMPDIFF(HOUR, start_time, end_time) &lt; 2 THEN '1-2小时'
+                WHEN TIMESTAMPDIFF(HOUR, start_time, end_time) &lt; 3 THEN '2-3小时'
+                WHEN TIMESTAMPDIFF(HOUR, start_time, end_time) &lt; 4 THEN '3-4小时'
+                ELSE '4小时以上'
+            END AS durationRange,
+            COUNT(*) AS count,
+            ROUND(COUNT(*) * 100.0 / (
+                SELECT COUNT(*) FROM booking 
+                WHERE status = 1
+                AND start_time BETWEEN #{startDate} AND #{endDate}
+                AND is_deleted = 0
+            ), 2) AS percentage
+        FROM
+            booking
+        WHERE
+            status = 1
+            AND start_time BETWEEN #{startDate} AND #{endDate}
+            AND is_deleted = 0
+        GROUP BY
+            durationRange
+        ORDER BY
+            CASE durationRange
+                WHEN '不到1小时' THEN 1
+                WHEN '1-2小时' THEN 2
+                WHEN '2-3小时' THEN 3
+                WHEN '3-4小时' THEN 4
+                ELSE 5
+            END ASC
+    </select>
+    
+    <!-- 获取总预订数 -->
+    <select id="getTotalBookings" resultType="java.lang.Integer">
+        SELECT
+            COUNT(*)
+        FROM
+            booking
+        WHERE
+            start_time BETWEEN #{startDate} AND #{endDate}
+            AND is_deleted = 0
+    </select>
+    
+    <!-- 获取总用户数 -->
+    <select id="getTotalUsers" resultType="java.lang.Integer">
+        SELECT
+            COUNT(*)
+        FROM
+            user
+        WHERE
+            is_deleted = 0
+    </select>
+    
+    <!-- 获取总会议室数 -->
+    <select id="getTotalRooms" resultType="java.lang.Integer">
+        SELECT
+            COUNT(*)
+        FROM
+            room
+        WHERE
+            is_deleted = 0
+    </select>
 </mapper>

@@ -19,4 +19,9 @@ public class Notification {
     private Date createTime;            // 创建时间
     private Date updateTime;            // 更新时间
     private Boolean isDeleted;          // 是否删除
+    
+    // 新增字段
+    private Integer receiverType;       // 接收者类型：0-指定用户，1-指定角色，2-所有用户
+    private Long receiverId;            // 接收者ID (receiverType=0时必填)
+    private Long roleId;                // 角色ID (receiverType=1时必填)
 }

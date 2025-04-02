@@ -116,7 +116,17 @@ public class NotificationServiceImpl implements NotificationService {
     public void sendNotification(Notification notification) {
         String title = notification.getTitle();
         String content = notification.getContent();
-        List<Long> userIds = userMapper.getAllUserIds();
+        List<Long> userIds = new ArrayList<>();
+        
+        // 根据接收者类型获取用户ID列表
+        if (notification.getReceiverType() == 0) {  // 指定用户
+            userIds.add(notification.getReceiverId());
+        } else if (notification.getReceiverType() == 1) {  // 指定角色
+            userIds = userMapper.getUserIdsByRoleId(notification.getRoleId());
+        } else {  // 所有用户
+            userIds = userMapper.getAllUserIds();
+        }
+        
         // 批量插入通知
         List<Notification> notifications = new ArrayList<>();
         Date now = new Date();
@@ -126,7 +136,7 @@ public class NotificationServiceImpl implements NotificationService {
             notification1.setUserId(userId);
             notification1.setTitle(title);
             notification1.setContent(content);
-            notification1.setType(3);
+            notification1.setType(notification.getType());
             notification1.setIsRead(false); // 未读状态
             notification1.setCreateTime(now);
             notification1.setUpdateTime(now);

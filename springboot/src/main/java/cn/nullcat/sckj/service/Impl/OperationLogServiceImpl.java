@@ -30,9 +30,21 @@ public class OperationLogServiceImpl implements OperationLogService {
                                      Long userId, String module, String operation,
                                      Date startTime, Date endTime) {
         PageHelper.startPage(page, pageSize);
-        List<OperationLog> list = operationLogMapper.getOperationLogs(
-                userId, module, operation, startTime, endTime);
+        List<OperationLog> list = operationLogMapper.getOperationLogs(userId, module, operation, startTime, endTime);
         Page<OperationLog> p = (Page<OperationLog>) list;
-        return new PageBean(p.getTotal(), p.getResult());
+
+        PageBean pageBean = new PageBean(p.getTotal(), p.getResult());
+        return pageBean;
+    }
+
+
+    @Override
+    public List<String> findAllModules() {
+        return operationLogMapper.findAllModules();
+    }
+
+    @Override
+    public List<String> findAllOperationTypes() {
+        return operationLogMapper.findAllOperationTypes();
     }
 }

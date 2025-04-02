@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -188,5 +189,16 @@ public class UserController {
     public Result banById(@PathVariable Integer id) {
         userservice.banOrUnseal(id);
         return Result.success("封禁成功");
+    }
+
+    /**
+     * 获取所有用户的简单列表（ID和用户名）
+     * @return
+     */
+    @GetMapping("/list")
+    @RequirePermission("notification:send")
+    public Result getUserList() {
+        List<User> userList = userservice.getUserList();
+        return Result.success(userList);
     }
 }

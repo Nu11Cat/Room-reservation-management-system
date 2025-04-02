@@ -3,6 +3,8 @@ package cn.nullcat.sckj.service;
 import cn.nullcat.sckj.pojo.PageBean;
 import cn.nullcat.sckj.pojo.User;
 
+import java.util.List;
+
 public interface UserService {
     String getPasswordByUserName(String username);
 
@@ -25,4 +27,6 @@ public interface UserService {
     void banOrUnseal(Integer id);
 
     Integer getStatusById(Integer userId);
+    
+    List<User> getUserList();
 }
