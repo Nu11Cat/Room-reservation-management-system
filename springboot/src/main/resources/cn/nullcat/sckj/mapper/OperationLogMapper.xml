@@ -35,4 +35,13 @@
         </if>
         ORDER BY l.create_time DESC
     </select>
+    <!-- 查询所有操作模块 -->
+    <select id="findAllModules" resultType="java.lang.String">
+        SELECT DISTINCT module FROM operation_log WHERE is_deleted = 0
+    </select>
+
+    <!-- 查询所有操作类型 -->
+    <select id="findAllOperationTypes" resultType="java.lang.String">
+        SELECT DISTINCT operation FROM operation_log WHERE is_deleted = 0
+    </select>
 </mapper>

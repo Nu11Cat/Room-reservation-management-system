@@ -5,10 +5,11 @@ import cn.nullcat.sckj.pojo.User;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
+import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
 
-
+@Mapper
 public interface UserMapper {
     /**
      * 注册
@@ -98,4 +99,19 @@ public interface UserMapper {
      */
     @Select("select status from user where id = #{userId}")
     Integer getStatusById(Integer userId);
+
+    /**
+     * 获取指定角色的所有用户ID
+     * @param roleId 角色ID
+     * @return 用户ID列表
+     */
+    @Select("SELECT id FROM user WHERE role_id = #{roleId}")
+    List<Long> getUserIdsByRoleId(Long roleId);
+
+    /**
+     * 获取所有用户的简单列表（ID和用户名）
+     * @return 用户列表
+     */
+    @Select("SELECT id, username FROM user WHERE status = 1")
+    List<User> getUserSimpleList();
 }

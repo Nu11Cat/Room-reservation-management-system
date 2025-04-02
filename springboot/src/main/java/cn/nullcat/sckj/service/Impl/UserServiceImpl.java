@@ -177,4 +177,13 @@ public class UserServiceImpl implements UserService {
     public Integer getStatusById(Integer userId) {
         return userMapper.getStatusById(userId);
     }
+
+    /**
+     * 获取所有用户的简单列表（ID和用户名）
+     * @return 用户列表
+     */
+    @Override
+    public List<User> getUserList() {
+        return userMapper.getUserSimpleList();
+    }
 }

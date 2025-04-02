@@ -21,4 +21,8 @@ public interface OperationLogMapper {
                                         @Param("operation") String operation,
                                         @Param("startTime") Date startTime,
                                         @Param("endTime") Date endTime);
+
+    List<String> findAllModules();
+
+    List<String> findAllOperationTypes();
 }
