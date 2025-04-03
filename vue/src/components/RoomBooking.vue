@@ -1,94 +1,178 @@
 <template>
   <div class="booking-container">
-    <div class="booking-header">
+    <div class="page-header">
       <h1>会议室预订</h1>
-      <div class="header-actions">
-        <el-date-picker 
-          v-model="selectedDate" 
-          type="date" 
-          placeholder="选择日期"
-          :disabled-date="disabledDate"
-          @change="handleDateChange"
-          format="YYYY年MM月DD日"
-          value-format="YYYY-MM-DD"
-          style="width: 240px"
-        />
-        <span class="date-display">{{ formatSelectedDate(selectedDate) }}</span>
-        <el-button size="small" @click="goBack">返回列表</el-button>
-      </div>
+      <div class="header-description">查看和预订可用会议室</div>
     </div>
     
-    <div class="time-legend">
-      <div class="legend-item">
-        <div class="color-block available"></div>
-        <span>可预约</span>
+    <el-card class="filter-card">
+      <div class="booking-header">
+        <div class="date-selector">
+          <el-date-picker 
+            v-model="selectedDate" 
+            type="date" 
+            placeholder="选择日期"
+            :disabled-date="disabledDate"
+            @change="handleDateChange"
+            format="YYYY年MM月DD日"
+            value-format="YYYY-MM-DD"
+            style="width: 240px"
+          />
+          <span class="date-display">{{ formatSelectedDate(selectedDate) }}</span>
+        </div>
+        <el-button type="primary" size="small" @click="goBack">
+          <el-icon><Back /></el-icon>
+          返回列表
+        </el-button>
       </div>
-      <div class="legend-item">
-        <div class="color-block booked"></div>
-        <span>已预约</span>
-      </div>
-      <div class="legend-item">
-        <div class="color-block pending"></div>
-        <span>待审批</span>
-      </div>
-    </div>
-    
-    <div class="booking-table-wrapper" v-loading="loading">
-      <table class="booking-table">
-        <thead>
-          <tr>
-            <th class="room-info-header">会议室信息</th>
-            <th v-for="hour in timeRange" :key="hour" class="hour-column" :colspan="4">
-              {{ hour }}:00
-            </th>
-          </tr>
-          <tr class="time-row">
-            <th></th>
-            <template v-for="hour in timeRange" :key="`min-${hour}`">
-              <th v-for="minute in ['00', '15', '30', '45']" :key="`${hour}:${minute}`" class="minute-column">
-                {{ minute }}
-              </th>
-            </template>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="room in rooms" :key="room.id" :class="{'room-disabled': room.status !== 1}">
-            <td class="room-info">
-              <div class="room-name">{{ room.name }}</div>
-              <div class="room-location">{{ room.location }}</div>
-              <div class="room-capacity">容量: {{ room.capacity }}人</div>
-              <el-tag size="small" :type="room.status === 1 ? 'success' : 'danger'">
-                {{ room.status === 1 ? '可用' : '不可用' }}
-              </el-tag>
-              <el-button 
-                type="primary" 
-                size="small" 
-                @click="handleBook(room)"
-                :disabled="room.status !== 1"
-                class="book-button">
-                预订
+      
+      <!-- 筛选区域 -->
+      <div class="filter-container">
+        <el-row :gutter="20">
+          <el-col :span="6">
+            <el-input 
+              v-model="filterForm.name" 
+              placeholder="会议室名称" 
+              clearable 
+              @input="applyFilters"
+            >
+              <template #prefix>
+                <el-icon><Search /></el-icon>
+              </template>
+            </el-input>
+          </el-col>
+          <el-col :span="6">
+            <el-input 
+              v-model="filterForm.location" 
+              placeholder="会议室位置" 
+              clearable 
+              @input="applyFilters"
+            >
+              <template #prefix>
+                <el-icon><Location /></el-icon>
+              </template>
+            </el-input>
+          </el-col>
+          <el-col :span="6">
+            <el-select 
+              v-model="filterForm.capacity" 
+              placeholder="容纳人数" 
+              clearable 
+              @change="applyFilters"
+              style="width: 100%"
+            >
+              <el-option label=">10人" :value="10" />
+              <el-option label=">20人" :value="20" />
+              <el-option label=">30人" :value="30" />
+              <el-option label=">50人" :value="50" />
+              <el-option label=">100人" :value="100" />
+            </el-select>
+          </el-col>
+          <el-col :span="6">
+            <div class="filter-buttons">
+              <el-button type="primary" @click="applyFilters">
+                <el-icon><Search /></el-icon>
+                筛选
               </el-button>
-            </td>
-            <template v-for="hour in timeRange" :key="`slot-${hour}-${room.id}`">
-              <td 
-                v-for="minute in ['00', '15', '30', '45']" 
-                :key="`${hour}:${minute}-${room.id}`" 
-                :class="[
-                  'time-slot',
-                  getTimeSlotStatus(`${hour}:${minute}`, room.id)
-                ]"
-              ></td>
-            </template>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+              <el-button @click="resetFilters">
+                <el-icon><Refresh /></el-icon>
+                重置
+              </el-button>
+            </div>
+          </el-col>
+        </el-row>
+      </div>
+    </el-card>
+    
+    <el-card class="booking-card">
+      <div class="legend-container">
+        <div class="time-legend">
+          <div class="legend-item">
+            <div class="color-block available"></div>
+            <span>可预约</span>
+          </div>
+          <div class="legend-item">
+            <div class="color-block booked"></div>
+            <span>已预约</span>
+          </div>
+          <div class="legend-item">
+            <div class="color-block pending"></div>
+            <span>待审批</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="booking-table-wrapper" v-loading="loading">
+        <table class="booking-table">
+          <thead>
+            <tr>
+              <th class="room-info-header">会议室信息</th>
+              <th v-for="hour in timeRange" :key="hour" class="hour-column" :colspan="4">
+                {{ hour }}:00
+              </th>
+            </tr>
+            <tr class="time-row">
+              <th></th>
+              <template v-for="hour in timeRange" :key="`min-${hour}`">
+                <th v-for="minute in ['00', '15', '30', '45']" :key="`${hour}:${minute}`" class="minute-column">
+                  {{ minute }}
+                </th>
+              </template>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="room in rooms" :key="room.id" :class="{'room-disabled': room.status !== 1}">
+              <td class="room-info">
+                <div class="room-card">
+                  <div class="room-name">{{ room.name }}</div>
+                  <div class="room-detail">
+                    <div class="room-location">
+                      <el-icon><Location /></el-icon>
+                      {{ room.location }}
+                    </div>
+                    <div class="room-capacity">
+                      <el-icon><UserFilled /></el-icon>
+                      容量: {{ room.capacity }}人
+                    </div>
+                  </div>
+                  <div class="room-actions">
+                    <el-tag size="small" :type="room.status === 1 ? 'success' : 'danger'" effect="light">
+                      {{ room.status === 1 ? '可用' : '不可用' }}
+                    </el-tag>
+                    <el-button 
+                      type="primary" 
+                      size="small" 
+                      @click="handleBook(room)"
+                      :disabled="room.status !== 1"
+                      class="book-button">
+                      <el-icon><Calendar /></el-icon>
+                      预订
+                    </el-button>
+                  </div>
+                </div>
+              </td>
+              <template v-for="hour in timeRange" :key="`slot-${hour}-${room.id}`">
+                <td 
+                  v-for="minute in ['00', '15', '30', '45']" 
+                  :key="`${hour}:${minute}-${room.id}`" 
+                  :class="[
+                    'time-slot',
+                    getTimeSlotStatus(`${hour}:${minute}`, room.id)
+                  ]"
+                ></td>
+              </template>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </el-card>
     
     <!-- 预订对话框 -->
     <el-dialog
       v-model="bookingDialogVisible"
       title="预订会议室"
       width="500px"
+      destroy-on-close
     >
       <el-form 
         :model="bookingForm" 
@@ -156,18 +240,90 @@ import { useRoute, useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import { getRoomList } from '@/api/room';
 import { addBooking, getBookingList } from '@/api/booking';
+import { 
+  Search, 
+  Location, 
+  UserFilled, 
+  Calendar, 
+  Back, 
+  Refresh 
+} from '@element-plus/icons-vue';
 
 export default {
   name: 'RoomBookingPage',
+  components: {
+    Search,
+    Location,
+    UserFilled,
+    Calendar,
+    Back,
+    Refresh
+  },
   setup() {
     const route = useRoute();
     const router = useRouter();
     const loading = ref(false);
     const bookingFormRef = ref(null);
     const rooms = ref([]);
+    const allRooms = ref([]); // 保存原始数据用于筛选
     const bookings = ref([]);
     const bookingDialogVisible = ref(false);
     const selectedRoom = ref(null);
+    
+    // 筛选表单
+    const filterForm = reactive({
+      name: '',
+      location: '',
+      capacity: ''
+    });
+    
+    // 应用筛选
+    const applyFilters = () => {
+      console.log('应用筛选:', filterForm);
+      
+      let filteredRooms = [...allRooms.value];
+      
+      // 按名称筛选
+      if (filterForm.name) {
+        filteredRooms = filteredRooms.filter(room => 
+          room.name.toLowerCase().includes(filterForm.name.toLowerCase())
+        );
+      }
+      
+      // 按位置筛选
+      if (filterForm.location) {
+        filteredRooms = filteredRooms.filter(room => 
+          room.location.toLowerCase().includes(filterForm.location.toLowerCase())
+        );
+      }
+      
+      // 按容量筛选
+      if (filterForm.capacity) {
+        if (filterForm.capacity === 10) {
+          filteredRooms = filteredRooms.filter(room => room.capacity > 10);
+        } else if (filterForm.capacity === 20) {
+          filteredRooms = filteredRooms.filter(room => room.capacity > 20);
+        } else if (filterForm.capacity === 30) {
+          filteredRooms = filteredRooms.filter(room => room.capacity > 30);
+        } else if (filterForm.capacity === 50) {
+          filteredRooms = filteredRooms.filter(room => room.capacity > 50);
+        } else if (filterForm.capacity === 100) {
+          filteredRooms = filteredRooms.filter(room => room.capacity > 100);
+        }
+      }
+      
+      rooms.value = filteredRooms;
+    };
+    
+    // 重置筛选
+    const resetFilters = () => {
+      filterForm.name = '';
+      filterForm.location = '';
+      filterForm.capacity = '';
+      
+      // 重置为原始数据
+      rooms.value = [...allRooms.value];
+    };
     
     // 格式化日期
     const formatDate = (date) => {
@@ -297,7 +453,8 @@ export default {
         });
         
         if (res && res.code === 1) {
-          rooms.value = res.data.rows || [];
+          allRooms.value = res.data.rows || [];
+          rooms.value = [...allRooms.value];
         } else {
           ElMessage.error(res?.msg || '获取会议室列表失败');
         }
@@ -378,11 +535,18 @@ export default {
           // 重新加载预订记录
           await loadBookings();
         } else {
-          ElMessage.error(res.msg || '预订申请提交失败');
+          // 显示错误信息，使用更明显的样式
+          ElMessage({
+            message: res.msg || '预订申请提交失败',
+            type: 'error',
+            duration: 5000,
+            showClose: true,
+            offset: 80
+          });
         }
       } catch (error) {
         console.error('预订申请提交失败:', error);
-        ElMessage.error('预订申请提交失败');
+        ElMessage.error('系统错误，请稍后重试');
       } finally {
         loading.value = false;
       }
@@ -403,23 +567,26 @@ export default {
     
     return {
       loading,
-      bookingFormRef,
-      selectedDate,
       rooms,
+      bookings,
       timeRange,
       timeSlots,
-      bookingForm,
-      bookingRules,
+      selectedDate,
       bookingDialogVisible,
       selectedRoom,
-      disabledDate: (time) => time.getTime() < Date.now() - 8.64e7,
-      handleDateChange,
+      bookingForm,
+      bookingFormRef,
+      bookingRules,
       formatSelectedDate,
+      handleDateChange,
       getTimeSlotStatus,
       handleBook,
       submitBooking,
       goBack,
-      isTimeDisabled
+      isTimeDisabled,
+      filterForm,
+      applyFilters,
+      resetFilters
     };
   }
 };
@@ -430,6 +597,34 @@ export default {
   padding: 20px;
   width: 100%;
   box-sizing: border-box;
+  background-color: #f5f7fa;
+  min-height: 100vh;
+}
+
+.page-header {
+  margin-bottom: 20px;
+}
+
+.page-header h1 {
+  font-size: 24px;
+  color: #303133;
+  margin-bottom: 8px;
+}
+
+.header-description {
+  color: #909399;
+  font-size: 14px;
+}
+
+.filter-card {
+  margin-bottom: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+}
+
+.booking-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
 }
 
 .booking-header {
@@ -439,7 +634,7 @@ export default {
   margin-bottom: 20px;
 }
 
-.header-actions {
+.date-selector {
   display: flex;
   align-items: center;
   gap: 15px;
@@ -448,24 +643,33 @@ export default {
 .date-display {
   font-size: 16px;
   font-weight: bold;
+  color: #409EFF;
+}
+
+.legend-container {
+  margin-bottom: 15px;
+  background-color: #f8f8f8;
+  border-radius: 4px;
+  padding: 10px;
 }
 
 .time-legend {
   display: flex;
   gap: 20px;
-  margin-bottom: 15px;
+  justify-content: center;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 8px;
 }
 
 .color-block {
   width: 20px;
   height: 20px;
   border-radius: 4px;
+  transition: all 0.2s;
 }
 
 .color-block.available {
@@ -474,7 +678,7 @@ export default {
 }
 
 .color-block.booked {
-  background-color: #fde2e2;
+  background-color: #fcb5b5;
   border: 1px solid #f56c6c;
 }
 
@@ -488,6 +692,7 @@ export default {
   overflow-x: auto;
   border-radius: 4px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
 }
 
 .booking-table {
@@ -506,14 +711,17 @@ export default {
 .booking-table th {
   background-color: #f5f7fa;
   font-weight: bold;
+  color: #606266;
 }
 
 .room-info-header {
   width: 200px;
+  background-color: #ecf5ff;
+  color: #409EFF;
 }
 
 .hour-column {
-  background-color: #f5f7fa;
+  background-color: #ecf5ff;
 }
 
 .minute-column {
@@ -522,19 +730,39 @@ export default {
 }
 
 .time-row th {
-  height: 24px;
-  line-height: 24px;
+  height: 30px;
+  line-height: 30px;
 }
 
 .room-info {
   text-align: left;
   padding: 10px;
   vertical-align: top;
+  background-color: #fafafa;
+}
+
+.room-card {
+  background-color: #fff;
+  border-radius: 4px;
+  padding: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s;
+}
+
+.room-card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
 }
 
 .room-name {
   font-weight: bold;
-  margin-bottom: 5px;
+  margin-bottom: 8px;
+  color: #303133;
+  font-size: 14px;
+}
+
+.room-detail {
+  margin-bottom: 10px;
 }
 
 .room-location, 
@@ -542,16 +770,37 @@ export default {
   color: #606266;
   font-size: 12px;
   margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
-.book-button {
+.room-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-top: 8px;
 }
 
+.book-button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
 .time-slot {
-  width: 25px;
-  height: 25px;
+  width: 24px;
+  height: 24px;
   cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid #fff;
+}
+
+.time-slot:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+  z-index: 2;
+  position: relative;
 }
 
 .time-slot.available {
@@ -559,7 +808,7 @@ export default {
 }
 
 .time-slot.booked {
-  background-color: #fde2e2;
+  background-color: #fcb5b5;
 }
 
 .time-slot.pending {
@@ -593,5 +842,25 @@ export default {
 
 .time-separator {
   color: #606266;
+}
+
+.filter-container {
+  margin-top: 20px;
+}
+
+.filter-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+@media (max-width: 768px) {
+  .booking-table-wrapper {
+    overflow-x: auto;
+  }
+  
+  .filter-container .el-row .el-col {
+    margin-bottom: 10px;
+  }
 }
 </style> 

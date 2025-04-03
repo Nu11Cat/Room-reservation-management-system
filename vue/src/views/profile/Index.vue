@@ -10,6 +10,24 @@
         <el-descriptions :column="1" border direction="vertical">
           <el-descriptions-item label="用户名">{{ userInfo.username }}</el-descriptions-item>
           <el-descriptions-item label="用户ID">{{ userInfo.id }}</el-descriptions-item>
+          <el-descriptions-item label="真实姓名">
+            <div class="edit-field">
+              <span>{{ userInfo.realName || '未设置' }}</span>
+              <el-input v-if="editingField === 'realName'" v-model="userForm.realName" placeholder="请输入真实姓名" />
+              <el-button 
+                v-if="editingField !== 'realName'" 
+                type="primary" 
+                size="small" 
+                @click="startEditing('realName')"
+              >
+                修改
+              </el-button>
+              <div v-else class="action-buttons">
+                <el-button type="success" size="small" @click="saveField('realName')">保存</el-button>
+                <el-button size="small" @click="cancelEditing">取消</el-button>
+              </div>
+            </div>
+          </el-descriptions-item>
           <el-descriptions-item label="邮箱">
             <div class="edit-field">
               <span>{{ userInfo.email || '未设置' }}</span>
@@ -48,6 +66,7 @@
           </el-descriptions-item>
           <el-descriptions-item label="角色">{{ getRoleName(userInfo.roleId) }}</el-descriptions-item>
           <el-descriptions-item label="创建时间">{{ formatDateTime(userInfo.createTime) }}</el-descriptions-item>
+          <el-descriptions-item label="更新时间">{{ formatDateTime(userInfo.updateTime) }}</el-descriptions-item>
           <el-descriptions-item label="状态">
             <el-tag :type="userInfo.status === 1 ? 'success' : 'danger'">
               {{ userInfo.status === 1 ? '正常' : '禁用' }}
@@ -137,7 +156,8 @@ export default {
     const userForm = reactive({
       username: '',
       email: '',
-      phone: ''
+      phone: '',
+      realName: ''
     });
     
     // 修改密码相关
@@ -187,6 +207,7 @@ export default {
       userForm.username = userInfo.value.username || '';
       userForm.email = userInfo.value.email || '';
       userForm.phone = userInfo.value.phone || '';
+      userForm.realName = userInfo.value.realName || '';
     };
     
     // 获取角色名称

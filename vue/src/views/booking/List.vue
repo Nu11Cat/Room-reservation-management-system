@@ -1,13 +1,19 @@
 <template>
   <div class="booking-list-container">
     <div class="page-header">
-      <h1>我的预订</h1>
-      <el-button type="primary" @click="goToBooking">新增预订</el-button>
+      <div class="header-content">
+        <h1>我的预订</h1>
+        <div class="header-description">查看和管理您的所有会议室预订</div>
+      </div>
+      <el-button type="primary" @click="goToBooking">
+        <el-icon><Plus /></el-icon>
+        新增预订
+      </el-button>
     </div>
     
     <!-- 搜索条件 -->
-    <el-card class="search-form-card">
-      <el-form :model="searchForm" inline>
+    <el-card class="filter-card">
+      <el-form :model="searchForm" inline class="search-form">
         <el-form-item label="时间范围:">
           <el-date-picker
             v-model="dateRange"
@@ -17,17 +23,32 @@
             end-placeholder="结束日期"
             value-format="YYYY-MM-DD"
             :shortcuts="dateShortcuts"
-          />
+          >
+            <template #prefix>
+              <el-icon><Calendar /></el-icon>
+            </template>
+          </el-date-picker>
         </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="handleSearch">搜索</el-button>
-          <el-button @click="resetSearch">重置</el-button>
+        <el-form-item class="search-buttons">
+          <el-button type="primary" @click="handleSearch">
+            <el-icon><Search /></el-icon>
+            搜索
+          </el-button>
+          <el-button @click="resetSearch">
+            <el-icon><Refresh /></el-icon>
+            重置
+          </el-button>
         </el-form-item>
       </el-form>
     </el-card>
     
     <!-- 数据表格 -->
-    <el-card class="table-card">
+    <el-card class="data-card">
+      <div class="card-header">
+        <span class="card-title">预订列表</span>
+        <span class="card-subtitle">共 {{ total }} 条记录</span>
+      </div>
+      
       <div class="table-operations">
         <el-button-group>
           <el-button :type="activeTab.value === 'all' ? 'primary' : ''" @click="setActiveTab('all')">全部</el-button>
@@ -38,63 +59,126 @@
         </el-button-group>
       </div>
       
-      <el-table :data="bookingList" style="width: 100%" v-loading="loading" border>
-        <el-table-column prop="id" label="预订ID" width="80" />
-        <el-table-column label="会议室" min-width="120">
+      <el-table 
+        :data="bookingList" 
+        style="width: 100%" 
+        v-loading="loading" 
+        border
+        :header-cell-style="{ 
+          background: '#f5f7fa', 
+          color: '#606266', 
+          fontWeight: 'bold' 
+        }"
+      >
+        <el-table-column prop="id" label="预订ID" width="160" align="center">
+          <template #header>
+            <div class="header-with-icon">
+              <el-icon><Ticket /></el-icon>
+              <span>预订ID</span>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="会议室" min-width="120" align="center">
+          <template #header>
+            <div class="header-with-icon">
+              <el-icon><House /></el-icon>
+              <span>会议室</span>
+            </div>
+          </template>
           <template #default="scope">
             <el-tooltip :content="getRoomFullInfo(scope.row)" placement="top">
               <span>{{ getRoomName(scope.row.roomId) }}</span>
             </el-tooltip>
           </template>
         </el-table-column>
-        <el-table-column prop="title" label="会议主题" min-width="150" show-overflow-tooltip />
-        <el-table-column label="预订时间" min-width="200">
-          <template #default="scope">
-            {{ formatDateTime(scope.row.startTime) }} 至<br>
-            {{ formatDateTime(scope.row.endTime) }}
+        <el-table-column prop="title" label="会议主题" min-width="150" show-overflow-tooltip align="center">
+          <template #header>
+            <div class="header-with-icon">
+              <el-icon><Document /></el-icon>
+              <span>会议主题</span>
+            </div>
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="100">
+        <el-table-column label="预订时间" min-width="300" align="center">
+          <template #header>
+            <div class="header-with-icon">
+              <el-icon><Timer /></el-icon>
+              <span>预订时间</span>
+            </div>
+          </template>
           <template #default="scope">
-            <el-tag :type="getStatusType(scope.row.status)">
+            <div class="time-display-horizontal">
+              {{ formatDateTime(scope.row.startTime) }} 至 {{ formatDateTime(scope.row.endTime) }}
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="状态" width="100" align="center">
+          <template #header>
+            <div class="header-with-icon">
+              <el-icon><InfoFilled /></el-icon>
+              <span>状态</span>
+            </div>
+          </template>
+          <template #default="scope">
+            <el-tag :type="getStatusType(scope.row.status)" effect="light">
               {{ getStatusText(scope.row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="创建时间" width="170">
+        <el-table-column label="创建时间" width="170" align="center">
+          <template #header>
+            <div class="header-with-icon">
+              <el-icon><Calendar /></el-icon>
+              <span>创建时间</span>
+            </div>
+          </template>
           <template #default="scope">
             {{ formatDateTime(scope.row.createTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="180">
+        <el-table-column label="操作" width="180" align="center">
+          <template #header>
+            <div class="header-with-icon">
+              <el-icon><Setting /></el-icon>
+              <span>操作</span>
+            </div>
+          </template>
           <template #default="scope">
-            <el-button size="small" @click="handleView(scope.row)">查看</el-button>
-            <el-button 
-              size="small" 
-              type="danger" 
-              @click="handleCancel(scope.row)"
-              v-if="scope.row.status === 0 || scope.row.status === 1"
-            >取消</el-button>
+            <div class="action-buttons">
+              <el-button size="small" type="primary" @click="handleView(scope.row)">
+                <el-icon><View /></el-icon>
+                查看
+              </el-button>
+              <el-button 
+                size="small" 
+                type="danger" 
+                @click="handleCancel(scope.row)"
+                v-if="scope.row.status === 0 || scope.row.status === 1"
+              >
+                <el-icon><Close /></el-icon>
+                取消
+              </el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
       
-      <div class="pagination-container">
-        <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :page-sizes="[10, 20, 50, 100]"
-          :small="false"
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="total"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
-      </div>
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        :small="false"
+        layout="total, sizes, prev, pager, next, jumper"
+        :total="total"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+        class="pagination"
+        background
+      />
     </el-card>
     
     <!-- 详情对话框 -->
-    <el-dialog v-model="detailVisible" title="预订详情" width="500px">
+    <el-dialog v-model="detailVisible" title="预订详情" width="500px" destroy-on-close>
       <el-descriptions :column="1" border>
         <el-descriptions-item label="会议室">{{ getRoomName(selectedBooking?.roomId) }}</el-descriptions-item>
         <el-descriptions-item label="会议主题">{{ selectedBooking?.title }}</el-descriptions-item>
@@ -131,9 +215,37 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { getBookingList, cancelBooking, getBookingDetail } from '@/api/booking';
 import { getRoomList } from '@/api/room';
 import { useUserStore } from '@/stores/user';
+import { 
+  Search, 
+  Refresh, 
+  Calendar, 
+  House, 
+  Document, 
+  Timer, 
+  InfoFilled, 
+  Setting, 
+  View, 
+  Close, 
+  Plus, 
+  Ticket
+} from '@element-plus/icons-vue';
 
 export default {
   name: 'BookingList',
+  components: {
+    Search, 
+    Refresh, 
+    Calendar, 
+    House, 
+    Document, 
+    Timer, 
+    InfoFilled, 
+    Setting, 
+    View, 
+    Close, 
+    Plus, 
+    Ticket
+  },
   setup() {
     const router = useRouter();
     const userStore = useUserStore();
@@ -437,6 +549,10 @@ export default {
 <style scoped>
 .booking-list-container {
   padding: 20px;
+  width: 100%;
+  box-sizing: border-box;
+  background-color: #f5f7fa;
+  min-height: 100vh;
 }
 
 .page-header {
@@ -444,23 +560,128 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  text-align: center;
 }
 
-.search-form-card {
-  margin-bottom: 20px;
+.header-content {
+  width: 100%;
+  text-align: center;
 }
 
-.table-card {
+.page-header h1 {
+  font-size: 24px;
+  color: #303133;
+  margin-bottom: 8px;
+}
+
+.header-description {
+  color: #909399;
+  font-size: 14px;
+}
+
+.filter-card {
   margin-bottom: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+}
+
+.search-form {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-buttons {
+  margin-left: auto;
+}
+
+.data-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #ebeef5;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #303133;
+}
+
+.card-subtitle {
+  font-size: 13px;
+  color: #909399;
 }
 
 .table-operations {
-  margin-bottom: 15px;
+  margin: 15px 20px;
 }
 
-.pagination-container {
+.header-with-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.time-display {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.time-display-horizontal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.time-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.action-buttons .el-button {
+  margin: 0;
+}
+
+.pagination {
   margin-top: 20px;
   display: flex;
   justify-content: flex-end;
+  padding: 15px;
+}
+
+@media (max-width: 768px) {
+  .search-form {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .search-buttons {
+    margin-left: 0;
+    margin-top: 10px;
+  }
+  
+  .table-operations .el-button-group {
+    display: flex;
+    flex-wrap: wrap;
+  }
 }
 </style> 
