@@ -1,10 +1,13 @@
 <template>
   <div class="approval-container">
     <div class="page-header">
-      <h1>审批管理</h1>
+      <div class="header-content">
+        <h1>审批管理</h1>
+        <div class="header-description">管理会议室预订审批流程</div>
+      </div>
     </div>
     
-    <div class="tabs-container">
+    <el-card class="tabs-card">
       <el-tabs v-model="activeTab" @tab-click="handleTabChange">
         <el-tab-pane label="待审批" name="pending">
           <div class="toolbar">
@@ -14,37 +17,114 @@
               style="width: 300px" 
               clearable 
               @keyup.enter="handleSearch"
-            />
-            <el-button type="primary" @click="handleSearch">搜索</el-button>
+            >
+              <template #prefix>
+                <el-icon><Search /></el-icon>
+              </template>
+            </el-input>
+            <el-button type="primary" @click="handleSearch">
+              <el-icon><Search /></el-icon>
+              搜索
+            </el-button>
           </div>
           
           <div class="table-wrapper">
+            <div class="card-header">
+              <span class="card-title">待审批列表</span>
+              <span class="card-subtitle">共 {{ pendingTotal }} 条记录</span>
+            </div>
+            
             <el-table 
               :data="pendingList" 
               border 
               style="width: 100%" 
               v-loading="loading"
-              :height="tableHeight"
+              :max-height="tableHeight"
+              :header-cell-style="{ 
+                background: '#f5f7fa', 
+                color: '#606266', 
+                fontWeight: 'bold',
+                textAlign: 'center'
+              }"
             >
-              <el-table-column prop="id" label="审批ID" width="80" />
-              <el-table-column prop="roomName" label="会议室" />
-              <el-table-column prop="title" label="会议主题" />
-              <el-table-column label="预订时间">
-                <template #default="scope">
-                  {{ formatDateTime(scope.row.startTime) }} - {{ formatTime(scope.row.endTime) }}
+              <el-table-column prop="id" label="审批ID" width="160" align="center">
+                <template #header>
+                  <div class="header-with-icon">
+                    <el-icon><Ticket /></el-icon>
+                    <span>审批ID</span>
+                  </div>
                 </template>
               </el-table-column>
-              <el-table-column prop="createTime" label="创建时间" width="180">
+              <el-table-column prop="roomName" label="会议室" min-width="120" align="center">
+                <template #header>
+                  <div class="header-with-icon">
+                    <el-icon><House /></el-icon>
+                    <span>会议室</span>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column prop="title" label="会议主题" min-width="150" show-overflow-tooltip align="center">
+                <template #header>
+                  <div class="header-with-icon">
+                    <el-icon><Document /></el-icon>
+                    <span>会议主题</span>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column label="预订时间" min-width="300" align="center">
+                <template #header>
+                  <div class="header-with-icon">
+                    <el-icon><Timer /></el-icon>
+                    <span>预订时间</span>
+                  </div>
+                </template>
+                <template #default="scope">
+                  <div class="time-display-horizontal">
+                    {{ formatDateTime(scope.row.startTime) }} - {{ formatTime(scope.row.endTime) }}
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column prop="createTime" label="创建时间" width="180" align="center">
+                <template #header>
+                  <div class="header-with-icon">
+                    <el-icon><Calendar /></el-icon>
+                    <span>创建时间</span>
+                  </div>
+                </template>
                 <template #default="scope">
                   {{ formatDateTime(scope.row.createTime) }}
                 </template>
               </el-table-column>
-              <el-table-column prop="applicantName" label="预订人" width="120" />
-              <el-table-column label="操作" width="250" fixed="right">
+              <el-table-column prop="applicantName" label="预订人" width="120" align="center">
+                <template #header>
+                  <div class="header-with-icon">
+                    <el-icon><User /></el-icon>
+                    <span>预订人</span>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="280" align="center" fixed="right">
+                <template #header>
+                  <div class="header-with-icon">
+                    <el-icon><Setting /></el-icon>
+                    <span>操作</span>
+                  </div>
+                </template>
                 <template #default="scope">
-                  <el-button size="small" type="primary" @click="handleView(scope.row)">详情</el-button>
-                  <el-button size="small" type="success" @click="handleApprove(scope.row)">批准</el-button>
-                  <el-button size="small" type="danger" @click="handleReject(scope.row)">拒绝</el-button>
+                  <div class="action-buttons">
+                    <el-button size="small" type="primary" @click="handleView(scope.row)">
+                      <el-icon><View /></el-icon>
+                      详情
+                    </el-button>
+                    <el-button size="small" type="success" @click="handleApprove(scope.row)">
+                      <el-icon><Check /></el-icon>
+                      批准
+                    </el-button>
+                    <el-button size="small" type="danger" @click="handleReject(scope.row)">
+                      <el-icon><Close /></el-icon>
+                      拒绝
+                    </el-button>
+                  </div>
                 </template>
               </el-table-column>
             </el-table>
@@ -60,6 +140,7 @@
               :current-page="currentPage"
               @size-change="handleSizeChange"
               @current-change="handleCurrentChange"
+              background
             />
             <el-empty v-else description="暂无待审批记录" />
           </div>
@@ -73,9 +154,19 @@
               style="width: 300px" 
               clearable 
               @keyup.enter="handleSearch"
-            />
-            <el-button type="primary" @click="handleSearch">搜索</el-button>
+            >
+              <template #prefix>
+                <el-icon><Search /></el-icon>
+              </template>
+            </el-input>
+            <el-button type="primary" @click="handleSearch">
+              <el-icon><Search /></el-icon>
+              搜索
+            </el-button>
             <el-select v-model="statusFilter" placeholder="审批结果" clearable style="width: 150px">
+              <template #prefix>
+                <el-icon><Filter /></el-icon>
+              </template>
               <el-option label="全部" value="" />
               <el-option label="已批准" :value="1" />
               <el-option label="已拒绝" :value="2" />
@@ -89,41 +180,115 @@
               value-format="YYYY-MM-DD"
               :shortcuts="dateShortcuts"
               style="width: 300px"
-            />
+            >
+              <template #prefix>
+                <el-icon><Calendar /></el-icon>
+              </template>
+            </el-date-picker>
           </div>
           
           <div class="table-wrapper">
+            <div class="card-header">
+              <span class="card-title">已审批列表</span>
+              <span class="card-subtitle">共 {{ approvedTotal }} 条记录</span>
+            </div>
+            
             <el-table 
               :data="approvedList" 
               border 
               style="width: 100%" 
               v-loading="loading"
-              :height="tableHeight"
+              :max-height="tableHeight"
+              :header-cell-style="{ 
+                background: '#f5f7fa', 
+                color: '#606266', 
+                fontWeight: 'bold',
+                textAlign: 'center'
+              }"
             >
-              <el-table-column prop="id" label="审批ID" width="80" />
-              <el-table-column prop="roomName" label="会议室" />
-              <el-table-column prop="title" label="会议主题" />
-              <el-table-column label="预订时间">
-                <template #default="scope">
-                  {{ formatDateTime(scope.row.startTime) }} - {{ formatTime(scope.row.endTime) }}
+              <el-table-column prop="id" label="审批ID" width="160" align="center">
+                <template #header>
+                  <div class="header-with-icon">
+                    <el-icon><Ticket /></el-icon>
+                    <span>审批ID</span>
+                  </div>
                 </template>
               </el-table-column>
-              <el-table-column prop="status" label="审批结果" width="100">
+              <el-table-column prop="roomName" label="会议室" min-width="120" align="center">
+                <template #header>
+                  <div class="header-with-icon">
+                    <el-icon><House /></el-icon>
+                    <span>会议室</span>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column prop="title" label="会议主题" min-width="150" show-overflow-tooltip align="center">
+                <template #header>
+                  <div class="header-with-icon">
+                    <el-icon><Document /></el-icon>
+                    <span>会议主题</span>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column label="预订时间" min-width="300" align="center">
+                <template #header>
+                  <div class="header-with-icon">
+                    <el-icon><Timer /></el-icon>
+                    <span>预订时间</span>
+                  </div>
+                </template>
                 <template #default="scope">
-                  <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'">
+                  <div class="time-display-horizontal">
+                    {{ formatDateTime(scope.row.startTime) }} - {{ formatTime(scope.row.endTime) }}
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column prop="status" label="审批结果" width="120" align="center">
+                <template #header>
+                  <div class="header-with-icon">
+                    <el-icon><InfoFilled /></el-icon>
+                    <span>审批结果</span>
+                  </div>
+                </template>
+                <template #default="scope">
+                  <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'" effect="light">
                     {{ scope.row.status === 1 ? '已批准' : '已拒绝' }}
                   </el-tag>
                 </template>
               </el-table-column>
-              <el-table-column prop="updateTime" label="审批时间" width="180">
+              <el-table-column prop="updateTime" label="审批时间" width="180" align="center">
+                <template #header>
+                  <div class="header-with-icon">
+                    <el-icon><Stopwatch /></el-icon>
+                    <span>审批时间</span>
+                  </div>
+                </template>
                 <template #default="scope">
                   {{ formatDateTime(scope.row.updateTime) }}
                 </template>
               </el-table-column>
-              <el-table-column prop="applicantName" label="预订人" width="120" />
-              <el-table-column label="操作" width="120" fixed="right">
+              <el-table-column prop="applicantName" label="预订人" width="120" align="center">
+                <template #header>
+                  <div class="header-with-icon">
+                    <el-icon><User /></el-icon>
+                    <span>预订人</span>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="120" align="center" fixed="right">
+                <template #header>
+                  <div class="header-with-icon">
+                    <el-icon><Setting /></el-icon>
+                    <span>操作</span>
+                  </div>
+                </template>
                 <template #default="scope">
-                  <el-button size="small" type="primary" @click="handleView(scope.row)">详情</el-button>
+                  <div class="action-buttons">
+                    <el-button size="small" type="primary" @click="handleView(scope.row)">
+                      <el-icon><View /></el-icon>
+                      详情
+                    </el-button>
+                  </div>
                 </template>
               </el-table-column>
             </el-table>
@@ -139,12 +304,13 @@
               :current-page="currentPage"
               @size-change="handleSizeChange"
               @current-change="handleCurrentChange"
+              background
             />
             <el-empty v-else description="暂无审批记录" />
           </div>
         </el-tab-pane>
       </el-tabs>
-    </div>
+    </el-card>
 
     <!-- 预订详情对话框 -->
     <el-dialog 
@@ -153,6 +319,7 @@
       width="700px"
       :close-on-click-modal="false"
       :append-to-body="true"
+      destroy-on-close
     >
       <div v-if="selectedBooking">
         <el-descriptions border>
@@ -187,21 +354,29 @@
       width="500px"
       :close-on-click-modal="false"
       :append-to-body="true"
+      destroy-on-close
     >
       <el-form :model="approvalForm" ref="approvalFormRef">
         <el-form-item label="审批意见" prop="comment" label-width="100px">
-          <el-input type="textarea" v-model="approvalForm.comment" rows="3" placeholder="请输入审批意见（可选）" />
+          <el-input 
+            type="textarea" 
+            v-model="approvalForm.comment" 
+            rows="3" 
+            placeholder="请输入审批意见（可选）" 
+          />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="approvalVisible = false">取消</el-button>
-        <el-button 
-          type="primary" 
-          @click="submitApproval" 
-          :loading="submitLoading"
-        >
-          确定{{ approvalAction === 'approve' ? '批准' : '拒绝' }}
-        </el-button>
+        <span class="dialog-footer">
+          <el-button @click="approvalVisible = false">取消</el-button>
+          <el-button 
+            :type="approvalAction === 'approve' ? 'success' : 'danger'" 
+            @click="submitApproval" 
+            :loading="submitLoading"
+          >
+            确定{{ approvalAction === 'approve' ? '批准' : '拒绝' }}
+          </el-button>
+        </span>
       </template>
     </el-dialog>
   </div>
@@ -211,9 +386,41 @@
 import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue';
 import { ElMessage } from 'element-plus';
 import { getPendingApprovals, approveBooking, getApprovedList } from '@/api/approval';
+import { 
+  Search, 
+  View, 
+  Check, 
+  Close, 
+  Calendar, 
+  House, 
+  Document, 
+  Timer, 
+  InfoFilled, 
+  Setting,
+  User,
+  Filter,
+  Ticket,
+  Stopwatch
+} from '@element-plus/icons-vue';
 
 export default {
   name: 'ApprovalList',
+  components: {
+    Search, 
+    View, 
+    Check, 
+    Close, 
+    Calendar, 
+    House, 
+    Document, 
+    Timer, 
+    InfoFilled, 
+    Setting,
+    User,
+    Filter,
+    Ticket,
+    Stopwatch
+  },
   setup() {
     const loading = ref(false);
     const searchInput = ref('');
@@ -288,8 +495,8 @@ export default {
         // 计算可用高度
         const availableHeight = windowHeight - headerHeight - tabsHeaderHeight - toolbarHeight - paginationHeight - padding;
         
-        // 确保最低高度
-        tableHeight.value = `${Math.max(450, availableHeight)}px`;
+        // 确保最低高度但降低最小值
+        tableHeight.value = `${Math.max(300, availableHeight)}px`;  // 从450px降低到300px
       });
     };
     
@@ -559,37 +766,150 @@ export default {
 <style scoped>
 .approval-container {
   padding: 20px;
+  width: 100%;
+  box-sizing: border-box;
+  background-color: #f5f7fa;
+  min-height: 100vh;
 }
 
 .page-header {
   margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-align: center;
 }
 
-.tabs-container {
-  background-color: #fff;
-  border-radius: 4px;
+.header-content {
+  width: 100%;
+  text-align: center;
+}
+
+.page-header h1 {
+  font-size: 24px;
+  color: #303133;
+  margin-bottom: 8px;
+}
+
+.header-description {
+  color: #909399;
+  font-size: 14px;
+}
+
+.tabs-card {
+  border-radius: 8px;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-  padding: 20px;
+  margin-bottom: 20px;
+  padding: 0;
+  overflow: hidden;
 }
 
 .toolbar {
-  margin-bottom: 20px;
+  margin: 20px;
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .table-wrapper {
   width: 100%;
   overflow: hidden;
+  margin-bottom: 0;  /* 减少表格底部边距 */
+}
+
+.el-table {
+  margin-bottom: 0;  /* 确保表格本身没有底部边距 */
+}
+
+.card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #ebeef5;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #303133;
+}
+
+.card-subtitle {
+  font-size: 13px;
+  color: #909399;
+}
+
+.header-with-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.time-display-horizontal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.action-buttons .el-button {
+  margin: 0;
 }
 
 .pagination-wrapper {
-  margin-top: 20px;
+  margin-top: 5px;  /* 进一步减少到5px */
+  padding: 0 20px;  /* 与表格对齐 */
 }
 
 .pagination {
   display: flex;
   justify-content: flex-end;
+  padding: 5px 0;  /* 减少上下内边距 */
+}
+
+/* 当表格数据少于5条时，增加最小高度确保页面布局美观 */
+.el-table:deep(.el-table__body-wrapper) {
+  min-height: 100px;
+}
+
+/* 设置表格最大高度的媒体查询以适应不同屏幕 */
+@media (max-height: 900px) {
+  .el-table {
+    max-height: 400px !important;
+  }
+}
+
+@media (max-height: 700px) {
+  .el-table {
+    max-height: 300px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .action-buttons .el-button {
+    width: 100%;
+    margin-bottom: 5px;
+  }
 }
 </style> 

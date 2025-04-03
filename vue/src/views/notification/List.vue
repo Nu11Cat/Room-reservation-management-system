@@ -1,7 +1,10 @@
 <template>
   <div class="notification-container">
     <div class="page-header">
-      <h1>通知中心</h1>
+      <div class="header-content">
+        <h1>通知中心</h1>
+        <div class="header-description">查看系统消息、预订状态变更及其他通知</div>
+      </div>
       <div>
         <el-button type="primary" @click="handlePublish" v-if="hasPermission([1])">
           <el-icon><Plus /></el-icon>发布通知
@@ -14,57 +17,119 @@
         <!-- 未读通知标签页 -->
         <el-tab-pane label="未读通知" name="unread">
           <div class="toolbar">
-            <el-input v-model="searchInput" placeholder="搜索通知" style="width: 300px" clearable />
-            <el-button type="primary" @click="handleSearch">搜索</el-button>
+            <el-input 
+              v-model="searchInput" 
+              placeholder="搜索通知" 
+              style="width: 300px" 
+              clearable
+              @keyup.enter="handleSearch"
+            >
+              <template #prefix>
+                <el-icon><Search /></el-icon>
+              </template>
+            </el-input>
+            <el-button type="primary" @click="handleSearch">
+              <el-icon><Search /></el-icon>
+              搜索
+            </el-button>
           </div>
           
-          <el-empty 
-            description="暂无未读通知" 
-            v-if="unreadList.length === 0 && !loading" 
-          />
+          <div class="table-wrapper">
+            <div class="card-header" v-if="unreadList.length > 0">
+              <span class="card-title">未读通知列表</span>
+              <span class="card-subtitle">共 {{ total }} 条记录</span>
+            </div>
+            
+            <el-empty 
+              description="暂无未读通知" 
+              v-if="unreadList.length === 0 && !loading" 
+            />
+            
+            <el-table 
+              :data="unreadList" 
+              border 
+              style="width: 100%" 
+              v-loading="loading" 
+              v-else
+              :header-cell-style="{ 
+                background: '#f5f7fa', 
+                color: '#606266', 
+                fontWeight: 'bold',
+                textAlign: 'center'
+              }"
+            >
+              <el-table-column prop="title" label="标题" min-width="120" show-overflow-tooltip align="center">
+                <template #header>
+                  <div class="header-with-icon">
+                    <el-icon><Document /></el-icon>
+                    <span>标题</span>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column prop="content" label="内容" min-width="200" show-overflow-tooltip align="center">
+                <template #header>
+                  <div class="header-with-icon">
+                    <el-icon><ChatDotRound /></el-icon>
+                    <span>内容</span>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column prop="type" label="类型" width="120" align="center">
+                <template #header>
+                  <div class="header-with-icon">
+                    <el-icon><InfoFilled /></el-icon>
+                    <span>类型</span>
+                  </div>
+                </template>
+                <template #default="scope">
+                  <el-tag :type="getTypeTag(scope.row.type)" effect="light">
+                    {{ getTypeText(scope.row.type) }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="createTime" label="创建时间" width="180" align="center">
+                <template #header>
+                  <div class="header-with-icon">
+                    <el-icon><Calendar /></el-icon>
+                    <span>创建时间</span>
+                  </div>
+                </template>
+                <template #default="scope">
+                  {{ formatDateTime(scope.row.createTime) }}
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="200" align="center" fixed="right">
+                <template #header>
+                  <div class="header-with-icon">
+                    <el-icon><Setting /></el-icon>
+                    <span>操作</span>
+                  </div>
+                </template>
+                <template #default="scope">
+                  <div class="action-buttons">
+                    <el-button 
+                      size="small" 
+                      type="primary" 
+                      @click="handleView(scope.row)"
+                    >
+                      <el-icon><View /></el-icon>
+                      查看
+                    </el-button>
+                    <el-button 
+                      size="small" 
+                      type="info" 
+                      @click="handleMarkRead(scope.row)"
+                    >
+                      <el-icon><Check /></el-icon>
+                      标为已读
+                    </el-button>
+                  </div>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
           
-          <el-table 
-            :data="unreadList" 
-            border 
-            style="width: 100%" 
-            v-loading="loading" 
-            v-else
-          >
-            <el-table-column prop="title" label="标题" min-width="120" show-overflow-tooltip />
-            <el-table-column prop="content" label="内容" min-width="200" show-overflow-tooltip />
-            <el-table-column prop="type" label="类型" width="100">
-              <template #default="scope">
-                <el-tag :type="getTypeTag(scope.row.type)">
-                  {{ getTypeText(scope.row.type) }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="createTime" label="创建时间" width="170">
-              <template #default="scope">
-                {{ formatDateTime(scope.row.createTime) }}
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="150">
-              <template #default="scope">
-                <el-button 
-                  size="small" 
-                  type="primary" 
-                  @click="handleView(scope.row)"
-                >
-                  查看
-                </el-button>
-                <el-button 
-                  size="small" 
-                  type="info" 
-                  @click="handleMarkRead(scope.row)"
-                >
-                  标为已读
-                </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-          
-          <div class="pagination-container">
+          <div class="pagination-wrapper" v-if="unreadList.length > 0">
             <el-pagination
               v-model:current-page="currentPage"
               v-model:page-size="pageSize"
@@ -73,7 +138,7 @@
               :total="total"
               @size-change="handleSizeChange"
               @current-change="handleCurrentChange"
-              v-if="unreadList.length > 0"
+              background
             />
           </div>
         </el-tab-pane>
@@ -81,15 +146,31 @@
         <!-- 全部通知标签页 -->
         <el-tab-pane label="全部通知" name="all">
           <div class="toolbar">
-            <el-input v-model="searchInput" placeholder="搜索通知" style="width: 300px" clearable />
-            <el-button type="primary" @click="handleSearch">搜索</el-button>
+            <el-input 
+              v-model="searchInput" 
+              placeholder="搜索通知" 
+              style="width: 300px" 
+              clearable
+              @keyup.enter="handleSearch"
+            >
+              <template #prefix>
+                <el-icon><Search /></el-icon>
+              </template>
+            </el-input>
+            <el-button type="primary" @click="handleSearch">
+              <el-icon><Search /></el-icon>
+              搜索
+            </el-button>
             <el-select 
               v-model="typeFilter" 
               placeholder="通知类型" 
               clearable 
-              style="width: 120px"
+              style="width: 150px"
               @change="handleFilterChange"
             >
+              <template #prefix>
+                <el-icon><Filter /></el-icon>
+              </template>
               <el-option label="全部类型" value="" />
               <el-option label="系统通知" :value="0" />
               <el-option label="预订通知" :value="1" />
@@ -99,62 +180,119 @@
               v-model="readFilter" 
               placeholder="已读状态" 
               clearable 
-              style="width: 120px"
+              style="width: 150px"
               @change="handleFilterChange"
             >
+              <template #prefix>
+                <el-icon><MessageBox /></el-icon>
+              </template>
               <el-option label="全部状态" value="" />
               <el-option label="已读" :value="1" />
               <el-option label="未读" :value="0" />
             </el-select>
           </div>
           
-          <el-empty 
-            description="暂无通知" 
-            v-if="allList.length === 0 && !loading" 
-          />
+          <div class="table-wrapper">
+            <div class="card-header" v-if="allList.length > 0">
+              <span class="card-title">全部通知列表</span>
+              <span class="card-subtitle">共 {{ total }} 条记录</span>
+            </div>
+            
+            <el-empty 
+              description="暂无通知" 
+              v-if="allList.length === 0 && !loading" 
+            />
+            
+            <el-table 
+              :data="allList" 
+              border 
+              style="width: 100%" 
+              v-loading="loading" 
+              v-else
+              :header-cell-style="{ 
+                background: '#f5f7fa', 
+                color: '#606266', 
+                fontWeight: 'bold',
+                textAlign: 'center'
+              }"
+            >
+              <el-table-column prop="title" label="标题" min-width="120" show-overflow-tooltip align="center">
+                <template #header>
+                  <div class="header-with-icon">
+                    <el-icon><Document /></el-icon>
+                    <span>标题</span>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column prop="content" label="内容" min-width="200" show-overflow-tooltip align="center">
+                <template #header>
+                  <div class="header-with-icon">
+                    <el-icon><ChatDotRound /></el-icon>
+                    <span>内容</span>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column prop="type" label="类型" width="120" align="center">
+                <template #header>
+                  <div class="header-with-icon">
+                    <el-icon><InfoFilled /></el-icon>
+                    <span>类型</span>
+                  </div>
+                </template>
+                <template #default="scope">
+                  <el-tag :type="getTypeTag(scope.row.type)" effect="light">
+                    {{ getTypeText(scope.row.type) }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="is_read" label="状态" width="100" align="center">
+                <template #header>
+                  <div class="header-with-icon">
+                    <el-icon><MessageBox /></el-icon>
+                    <span>状态</span>
+                  </div>
+                </template>
+                <template #default="scope">
+                  <el-tag size="small" :type="scope.row.is_read == 1 ? 'success' : 'danger'" effect="light">
+                    {{ scope.row.is_read == 1 ? '已读' : '未读' }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="createTime" label="创建时间" width="180" align="center">
+                <template #header>
+                  <div class="header-with-icon">
+                    <el-icon><Calendar /></el-icon>
+                    <span>创建时间</span>
+                  </div>
+                </template>
+                <template #default="scope">
+                  {{ formatDateTime(scope.row.createTime) }}
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="120" align="center" fixed="right">
+                <template #header>
+                  <div class="header-with-icon">
+                    <el-icon><Setting /></el-icon>
+                    <span>操作</span>
+                  </div>
+                </template>
+                <template #default="scope">
+                  <div class="action-buttons">
+                    <el-button 
+                      size="small" 
+                      type="primary" 
+                      @click="handleView(scope.row)"
+                    >
+                      <el-icon><View /></el-icon>
+                      查看
+                    </el-button>
+                  </div>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
           
-          <el-table 
-            :data="allList" 
-            border 
-            style="width: 100%" 
-            v-loading="loading" 
-            v-else
-          >
-            <el-table-column prop="title" label="标题" min-width="120" show-overflow-tooltip />
-            <el-table-column prop="content" label="内容" min-width="200" show-overflow-tooltip />
-            <el-table-column prop="type" label="类型" width="100">
-              <template #default="scope">
-                <el-tag :type="getTypeTag(scope.row.type)">
-                  {{ getTypeText(scope.row.type) }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="is_read" label="状态" width="80">
-              <template #default="scope">
-                <el-tag size="small" :type="scope.row.is_read == 1 ? 'success' : 'danger'">
-                  {{ scope.row.is_read == 1 ? '已读' : '未读' }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="createTime" label="创建时间" width="170">
-              <template #default="scope">
-                {{ formatDateTime(scope.row.createTime) }}
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="100">
-              <template #default="scope">
-                <el-button 
-                  size="small" 
-                  type="primary" 
-                  @click="handleView(scope.row)"
-                >
-                  查看
-                </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-          
-          <div class="pagination-container">
+          <div class="pagination-wrapper" v-if="allList.length > 0">
             <el-pagination
               v-model:current-page="currentPage"
               v-model:page-size="pageSize"
@@ -163,7 +301,7 @@
               :total="total"
               @size-change="handleSizeChange"
               @current-change="handleCurrentChange"
-              v-if="allList.length > 0"
+              background
             />
           </div>
         </el-tab-pane>
@@ -191,7 +329,10 @@
           {{ selectedNotification.content }}
         </div>
         <div class="notification-actions" v-if="selectedNotification.is_read != 1">
-          <el-button type="primary" @click="handleMarkDetailRead">标为已读</el-button>
+          <el-button type="primary" @click="handleMarkDetailRead">
+            <el-icon><Check /></el-icon>
+            标为已读
+          </el-button>
         </div>
       </div>
     </el-dialog>
@@ -248,16 +389,17 @@
             v-model="publishForm.content" 
             type="textarea" 
             :rows="5" 
-            placeholder="请输入通知内容">
-          </el-input>
+            placeholder="请输入通知内容"
+          ></el-input>
         </el-form-item>
       </el-form>
-      
       <template #footer>
-        <el-button @click="publishVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitPublish" :loading="submitting">
-          发布
-        </el-button>
+        <span class="dialog-footer">
+          <el-button @click="publishVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleSubmitPublish" :loading="publishLoading">
+            确认发布
+          </el-button>
+        </span>
       </template>
     </el-dialog>
   </div>
@@ -269,12 +411,34 @@ import { ElMessage } from 'element-plus';
 import { getNotificationList, markNotificationRead, sendNotification } from '@/api/notification';
 import { getUsers } from '@/api/user';
 import { useUserStore } from '@/stores/user';
-import { Plus } from '@element-plus/icons-vue';
+import { 
+  Search, 
+  View, 
+  Check, 
+  Calendar, 
+  Document, 
+  InfoFilled, 
+  Setting,
+  Plus,
+  Filter,
+  MessageBox,
+  ChatDotRound
+} from '@element-plus/icons-vue';
 
 export default {
   name: 'NotificationList',
   components: {
-    Plus
+    Search,
+    View,
+    Check,
+    Calendar,
+    Document,
+    InfoFilled,
+    Setting,
+    Plus,
+    Filter,
+    MessageBox,
+    ChatDotRound
   },
   setup() {
     // 基础数据
@@ -655,28 +819,100 @@ export default {
 <style scoped>
 .notification-container {
   padding: 20px;
+  width: 100%;
+  box-sizing: border-box;
+  background-color: #f5f7fa;
+  min-height: 100vh;
 }
 
 .page-header {
+  margin-bottom: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+}
+
+.header-content {
+  flex: 1;
 }
 
 .page-header h1 {
-  margin: 0;
+  font-size: 24px;
+  color: #303133;
+  margin-bottom: 8px;
+}
+
+.header-description {
+  color: #909399;
+  font-size: 14px;
 }
 
 .tabs-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
   margin-bottom: 20px;
+  padding: 0;
+  overflow: hidden;
 }
 
 .toolbar {
+  margin: 20px;
   display: flex;
   gap: 10px;
-  margin-bottom: 15px;
   flex-wrap: wrap;
+  align-items: center;
+}
+
+.table-wrapper {
+  width: 100%;
+  overflow: hidden;
+  margin-bottom: 0;
+}
+
+.el-table {
+  margin-bottom: 0;
+}
+
+.card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #ebeef5;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #303133;
+}
+
+.card-subtitle {
+  font-size: 13px;
+  color: #909399;
+}
+
+.header-with-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.action-buttons .el-button {
+  margin: 0;
+}
+
+.pagination-wrapper {
+  margin-top: 5px;
+  padding: 0 20px;
 }
 
 .pagination-container {
@@ -685,33 +921,60 @@ export default {
   justify-content: flex-end;
 }
 
+/* 通知详情样式 */
 .notification-detail {
   padding: 10px;
 }
 
 .notification-title {
-  font-size: 18px;
-  font-weight: bold;
-  margin-bottom: 10px;
+  margin-bottom: 16px;
+  color: #303133;
+  text-align: center;
 }
 
 .notification-meta {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 15px;
+  justify-content: space-between;
+  margin-bottom: 20px;
   color: #909399;
+  font-size: 14px;
 }
 
 .notification-content {
-  line-height: 1.6;
+  background-color: #f8f9fb;
+  padding: 15px;
+  border-radius: 4px;
+  min-height: 100px;
   margin-bottom: 20px;
   white-space: pre-line;
+  line-height: 1.6;
 }
 
 .notification-actions {
-  margin-top: 15px;
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .action-buttons .el-button {
+    width: 100%;
+    margin-bottom: 5px;
+  }
+}
+
+/* 当表格数据少于5条时，增加最小高度确保页面布局美观 */
+.el-table:deep(.el-table__body-wrapper) {
+  min-height: 100px;
 }
 </style> 

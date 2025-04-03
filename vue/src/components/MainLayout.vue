@@ -2,21 +2,34 @@
   <div class="main-layout">
     <el-container class="layout-container">
       <!-- 顶部导航栏 -->
-      <el-header height="60px">
+      <el-header height="60px" class="app-header">
         <div class="header-logo">
+          <img src="@/assets/logo.png" alt="Logo" class="logo-img" v-if="false" />
           <h2>会议室预订系统</h2>
         </div>
         <div class="header-menu">
           <NotificationIcon />
-          <el-dropdown @command="handleCommand">
+          <div class="divider"></div>
+          <el-dropdown @command="handleCommand" trigger="click">
             <span class="user-dropdown">
-              {{ userInfo.username || '用户' }}
+              <el-avatar :size="32" class="user-avatar">{{ userInfo.username ? userInfo.username.substring(0, 1).toUpperCase() : 'U' }}</el-avatar>
+              <span class="username">{{ userInfo.username || '用户' }}</span>
               <el-icon><ArrowDown /></el-icon>
             </span>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item command="profile">个人中心</el-dropdown-item>
-                <el-dropdown-item command="logout">退出登录</el-dropdown-item>
+                <el-dropdown-item command="profile">
+                  <el-icon><User /></el-icon>
+                  <span>个人中心</span>
+                </el-dropdown-item>
+                <el-dropdown-item command="about">
+                  <el-icon><InfoFilled /></el-icon>
+                  <span>关于系统</span>
+                </el-dropdown-item>
+                <el-dropdown-item divided command="logout">
+                  <el-icon><SwitchButton /></el-icon>
+                  <span>退出登录</span>
+                </el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
@@ -25,7 +38,7 @@
       
       <el-container>
         <!-- 侧边栏导航 -->
-        <el-aside width="220px">
+        <el-aside width="220px" class="app-sidebar">
           <el-menu
             :default-active="activeMenu"
             class="sidebar-menu"
@@ -53,6 +66,10 @@
                 <el-icon><Document /></el-icon>
                 <span>操作日志</span>
               </el-menu-item>
+              <el-menu-item index="/system/permission">
+                <el-icon><Lock /></el-icon>
+                <span>权限管理</span>
+              </el-menu-item>
             </el-sub-menu>
             
             <!-- 会议室相关 -->
@@ -61,8 +78,14 @@
                 <el-icon><OfficeBuilding /></el-icon>
                 <span>会议室管理</span>
               </template>
-              <el-menu-item index="/room/booking">会议室预订</el-menu-item>
-              <el-menu-item index="/room/list">会议室列表</el-menu-item>
+              <el-menu-item index="/room/booking">
+                <el-icon><Notebook /></el-icon>
+                <span>会议室预订</span>
+              </el-menu-item>
+              <el-menu-item index="/room/list">
+                <el-icon><List /></el-icon>
+                <span>会议室列表</span>
+              </el-menu-item>
             </el-sub-menu>
             
             <!-- 预订相关 -->
@@ -71,8 +94,14 @@
                 <el-icon><Calendar /></el-icon>
                 <span>预订管理</span>
               </template>
-              <el-menu-item index="/booking/list">预订列表</el-menu-item>
-              <el-menu-item index="/booking/calendar">日历视图</el-menu-item>
+              <el-menu-item index="/booking/list">
+                <el-icon><Tickets /></el-icon>
+                <span>预订列表</span>
+              </el-menu-item>
+              <el-menu-item index="/booking/calendar">
+                <el-icon><Calendar /></el-icon>
+                <span>日历视图</span>
+              </el-menu-item>
               <el-menu-item index="/admin/bookings" v-if="hasPermission([1])">
                 <el-icon><Management /></el-icon>
                 <span>全部预约管理</span>
@@ -91,18 +120,24 @@
               <template #title>通知中心</template>
             </el-menu-item>
             
-            <!-- 个人中心 -->
-            <el-menu-item index="/profile">
-              <el-icon><Setting /></el-icon>
-              <template #title>个人中心</template>
-            </el-menu-item>
-            
             <!-- 统计分析 -->
             <el-menu-item index="/statistics" v-if="hasPermission([1])">
               <el-icon><TrendCharts /></el-icon>
               <span>统计分析</span>
             </el-menu-item>
+            
+            <!-- 个人中心 -->
+            <el-menu-item index="/profile">
+              <el-icon><User /></el-icon>
+              <template #title>个人中心</template>
+            </el-menu-item>
           </el-menu>
+          
+          <!-- 折叠按钮 -->
+          <div class="collapse-btn" @click="toggleCollapse">
+            <el-icon v-if="!isCollapse"><DArrowLeft /></el-icon>
+            <el-icon v-else><DArrowRight /></el-icon>
+          </div>
         </el-aside>
         
         <!-- 主内容区域 -->
@@ -122,7 +157,27 @@
 import { ref, computed, onMounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessageBox } from 'element-plus';
-import { ArrowDown, User, OfficeBuilding, Calendar, Checked, Bell, Setting, Tools, Management, TrendCharts, Document } from '@element-plus/icons-vue';
+import { 
+  ArrowDown, 
+  User, 
+  OfficeBuilding, 
+  Calendar, 
+  Checked, 
+  Bell, 
+  Setting, 
+  Tools, 
+  Management, 
+  TrendCharts, 
+  Document, 
+  Lock, 
+  SwitchButton,
+  DArrowLeft,
+  DArrowRight,
+  Notebook,
+  List,
+  Tickets,
+  InfoFilled
+} from '@element-plus/icons-vue';
 import { useUserStore } from '@/stores/user';
 import NotificationIcon from '@/components/NotificationIcon.vue';
 import { getUnreadCount } from '@/api/notification';
@@ -141,7 +196,15 @@ export default {
     NotificationIcon,
     Management,
     TrendCharts,
-    Document
+    Document,
+    Lock,
+    SwitchButton,
+    DArrowLeft,
+    DArrowRight,
+    Notebook,
+    List,
+    Tickets,
+    InfoFilled
   },
   setup() {
     const router = useRouter();
@@ -155,6 +218,11 @@ export default {
       return route.path;
     });
     
+    // 切换折叠状态
+    const toggleCollapse = () => {
+      isCollapse.value = !isCollapse.value;
+    };
+    
     // 检查用户是否有权限
     const hasPermission = (roles) => {
       const userRole = userInfo.value.roleId;
@@ -165,6 +233,8 @@ export default {
     const handleCommand = (command) => {
       if (command === 'profile') {
         router.push('/profile');
+      } else if (command === 'about') {
+        window.open('https://github.com/Nu11Cat/Room-reservation-management-system', '_blank');
       } else if (command === 'logout') {
         ElMessageBox.confirm('确定要退出登录吗?', '提示', {
           confirmButtonText: '确定',
@@ -202,7 +272,8 @@ export default {
       userInfo,
       activeMenu,
       hasPermission,
-      handleCommand
+      handleCommand,
+      toggleCollapse
     };
   }
 };
@@ -220,8 +291,8 @@ export default {
   transform: translateZ(0);
 }
 
-.el-header {
-  background-color: #304156;
+.app-header {
+  background: linear-gradient(90deg, #304156 0%, #2c5282 100%);
   color: #fff;
   display: flex;
   justify-content: space-between;
@@ -229,6 +300,7 @@ export default {
   padding: 0 20px;
   position: relative;
   z-index: 10;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .header-logo {
@@ -236,14 +308,29 @@ export default {
   align-items: center;
 }
 
+.logo-img {
+  height: 36px;
+  margin-right: 10px;
+}
+
 .header-logo h2 {
   margin: 0;
   font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
 }
 
 .header-menu {
   display: flex;
   align-items: center;
+  gap: 15px;
+}
+
+.divider {
+  height: 24px;
+  width: 1px;
+  background-color: rgba(255, 255, 255, 0.3);
+  margin: 0 5px;
 }
 
 .user-dropdown {
@@ -251,15 +338,37 @@ export default {
   cursor: pointer;
   display: flex;
   align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 4px;
+  transition: background-color 0.3s;
 }
 
-.el-aside {
+.user-dropdown:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.user-avatar {
+  background-color: #409EFF;
+  color: white;
+  font-weight: bold;
+}
+
+.username {
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-sidebar {
   background-color: #304156;
   color: #bfcbd9;
-  transition: width 0.3s;
+  transition: all 0.3s;
   position: relative;
   z-index: 5;
   will-change: transform;
+  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.1);
 }
 
 .sidebar-menu {
@@ -269,8 +378,57 @@ export default {
   overflow-x: hidden;
 }
 
+.sidebar-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-menu::-webkit-scrollbar-thumb {
+  background-color: rgba(144, 147, 153, 0.3);
+  border-radius: 3px;
+}
+
+.sidebar-menu::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+.collapse-btn {
+  position: absolute;
+  bottom: 20px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #bfcbd9;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.3s;
+}
+
+.collapse-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #409EFF;
+}
+
+.el-menu-item.is-active {
+  background-color: #263445 !important;
+  border-left: 4px solid #409EFF;
+  padding-left: 16px !important;
+}
+
+.el-sub-menu.is-active > .el-sub-menu__title {
+  color: #409EFF !important;
+}
+
+.el-menu-item:hover, .el-sub-menu__title:hover {
+  background-color: #263445 !important;
+}
+
 .el-main {
-  background-color: #f0f2f5;
+  background-color: #f5f7fa;
   padding: 20px;
   overflow-y: auto;
   position: relative;
@@ -284,5 +442,24 @@ export default {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+/* 添加响应式样式 */
+@media (max-width: 768px) {
+  .el-aside {
+    width: 64px !important;
+  }
+  
+  .el-menu--collapse {
+    width: 64px !important;
+  }
+  
+  .header-logo h2 {
+    display: none;
+  }
+  
+  .username {
+    display: none;
+  }
 }
 </style> 

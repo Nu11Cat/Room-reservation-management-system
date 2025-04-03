@@ -1,67 +1,158 @@
 <template>
   <div class="room-container">
-    <h1>会议室列表</h1>
-    <div class="toolbar">
-      <el-input
-        v-model="searchParams.name"
-        placeholder="会议室名称"
-        clearable
-        style="width: 200px"
-      />
-      <el-input
-        v-model="searchParams.location"
-        placeholder="会议室位置"
-        clearable
-        style="width: 200px"
-      />
-      <el-select v-model="searchParams.capacity" placeholder="容纳人数" clearable style="width: 200px">
-        <el-option label=">10人" :value="10" />
-        <el-option label=">20人" :value="20" />
-        <el-option label=">30人" :value="30" />
-        <el-option label=">50人" :value="50" />
-        <el-option label=">100人" :value="100" />
-      </el-select>
-      <el-select v-model="searchParams.status" placeholder="会议室状态" clearable style="width: 200px">
-        <el-option label="可用" :value="1" />
-        <el-option label="维护中" :value="0" />
-      </el-select>
-      <el-button type="primary" @click="handleSearch">搜索</el-button>
-      <el-button @click="resetSearch">重置</el-button>
-      <el-button v-permission-button="'add'" type="success" @click="handleAdd">添加会议室</el-button>
+    <div class="page-header">
+      <h1>会议室列表</h1>
+      <div class="header-description">查看和管理所有会议室</div>
     </div>
 
-    <el-table :data="roomList" border stripe v-loading="loading">
-      <el-table-column type="index" label="序号" width="60" />
-      <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column prop="name" label="名称" />
-      <el-table-column prop="location" label="位置" />
-      <el-table-column prop="capacity" label="容纳人数" />
-      <el-table-column label="状态" width="100">
-        <template #default="{ row }">
-          <el-tag :type="row.status === 1 ? 'success' : 'danger'">
-            {{ row.status === 1 ? '可用' : '维护中' }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" width="250">
-        <template #default="{ row }">
-          <el-button type="primary" @click="handleView(row)">查看</el-button>
-          <el-button v-permission-button="'edit'" type="warning" @click="handleEdit(row)">编辑</el-button>
-          <el-button v-permission-operation="'delete'" type="danger" @click="handleDelete(row)">删除</el-button>
-          <el-button type="success" @click="navigateToBooking(row)" :disabled="row.status !== 1">预约</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <el-card class="filter-card">
+      <div class="toolbar">
+        <el-input
+          v-model="searchParams.name"
+          placeholder="会议室名称"
+          clearable
+          style="width: 200px"
+        >
+          <template #prefix>
+            <el-icon><Search /></el-icon>
+          </template>
+        </el-input>
+        <el-input
+          v-model="searchParams.location"
+          placeholder="会议室位置"
+          clearable
+          style="width: 200px"
+        >
+          <template #prefix>
+            <el-icon><Location /></el-icon>
+          </template>
+        </el-input>
+        <el-select v-model="searchParams.capacity" placeholder="容纳人数" clearable style="width: 200px">
+          <el-option label=">10人" :value="10" />
+          <el-option label=">20人" :value="20" />
+          <el-option label=">30人" :value="30" />
+          <el-option label=">50人" :value="50" />
+          <el-option label=">100人" :value="100" />
+        </el-select>
+        <el-select v-model="searchParams.status" placeholder="会议室状态" clearable style="width: 200px">
+          <el-option label="可用" :value="1" />
+          <el-option label="维护中" :value="0" />
+        </el-select>
+        <div class="button-group">
+          <el-button type="primary" @click="handleSearch">
+            <el-icon><Search /></el-icon>
+            搜索
+          </el-button>
+          <el-button @click="resetSearch">
+            <el-icon><Refresh /></el-icon>
+            重置
+          </el-button>
+          <el-button v-permission-button="'add'" type="success" @click="handleAdd">
+            <el-icon><Plus /></el-icon>
+            添加会议室
+          </el-button>
+        </div>
+      </div>
+    </el-card>
 
-    <el-pagination
-      v-model:currentPage="currentPage"
-      v-model:page-size="pageSize"
-      :page-sizes="[10, 20, 30, 50]"
-      layout="total, sizes, prev, pager, next, jumper"
-      :total="total"
-      @size-change="handleSizeChange"
-      @current-change="handleCurrentChange"
-    />
+    <el-card class="data-card">
+      <div class="card-header">
+        <span class="card-title">会议室管理</span>
+        <span class="card-subtitle">共 {{ total }} 个会议室</span>
+      </div>
+
+      <el-table 
+        :data="roomList" 
+        border 
+        stripe 
+        v-loading="loading"
+        :header-cell-style="{ 
+          background: '#f5f7fa', 
+          color: '#606266', 
+          fontWeight: 'bold' 
+        }"
+      >
+        <el-table-column type="index" label="序号" width="60" align="center" />
+        <el-table-column prop="id" label="ID" width="80" align="center" />
+        <el-table-column prop="name" label="名称" align="center">
+          <template #header>
+            <div class="header-with-icon">
+              <el-icon><House /></el-icon>
+              <span>名称</span>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column prop="location" label="位置" align="center">
+          <template #header>
+            <div class="header-with-icon">
+              <el-icon><Location /></el-icon>
+              <span>位置</span>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column prop="capacity" label="容纳人数" align="center">
+          <template #header>
+            <div class="header-with-icon">
+              <el-icon><UserFilled /></el-icon>
+              <span>容纳人数</span>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="状态" width="100" align="center">
+          <template #header>
+            <div class="header-with-icon">
+              <el-icon><InfoFilled /></el-icon>
+              <span>状态</span>
+            </div>
+          </template>
+          <template #default="{ row }">
+            <el-tag :type="row.status === 1 ? 'success' : 'danger'" effect="light">
+              {{ row.status === 1 ? '可用' : '维护中' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="280" align="center">
+          <template #header>
+            <div class="header-with-icon">
+              <el-icon><Setting /></el-icon>
+              <span>操作</span>
+            </div>
+          </template>
+          <template #default="{ row }">
+            <div class="action-buttons">
+              <el-button type="primary" size="small" @click="handleView(row)">
+                <el-icon><View /></el-icon>
+                查看
+              </el-button>
+              <el-button v-permission-button="'edit'" type="warning" size="small" @click="handleEdit(row)">
+                <el-icon><Edit /></el-icon>
+                编辑
+              </el-button>
+              <el-button v-permission-operation="'delete'" type="danger" size="small" @click="handleDelete(row)">
+                <el-icon><Delete /></el-icon>
+                删除
+              </el-button>
+              <el-button type="success" size="small" @click="navigateToBooking(row)" :disabled="row.status !== 1">
+                <el-icon><Calendar /></el-icon>
+                预约
+              </el-button>
+            </div>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <el-pagination
+        v-model:currentPage="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="[10, 20, 30, 50]"
+        layout="total, sizes, prev, pager, next, jumper"
+        :total="total"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+        class="pagination"
+        background
+      />
+    </el-card>
 
     <!-- 会议室详情对话框 -->
     <el-dialog
@@ -102,8 +193,11 @@
         <el-form-item label="容纳人数" prop="capacity">
           <el-input-number v-model="roomForm.capacity" :min="1" />
         </el-form-item>
-        <el-form-item label="设备" prop="facilities">
-          <el-input v-model="roomForm.facilities" type="textarea" />
+        <el-form-item label="设备" prop="equipment">
+          <el-input v-model="roomForm.equipment" type="textarea" placeholder="请输入会议室设备，如投影仪、白板等" />
+        </el-form-item>
+        <el-form-item label="描述" prop="description">
+          <el-input v-model="roomForm.description" type="textarea" placeholder="请输入会议室描述" />
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="roomForm.status">
@@ -127,9 +221,37 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { usePermissionStore } from '@/stores/permission';
 import { useUserStore } from '@/stores/user';
 import { getRoomList, addRoom, updateRoom, deleteRoom, getRoomDetail } from '@/api/room';
+import { 
+  Search, 
+  Location, 
+  UserFilled, 
+  Calendar, 
+  Refresh, 
+  Plus, 
+  House, 
+  InfoFilled, 
+  Setting, 
+  View, 
+  Edit, 
+  Delete 
+} from '@element-plus/icons-vue';
 
 export default {
   name: 'RoomManagementPage',
+  components: {
+    Search,
+    Location,
+    UserFilled,
+    Calendar,
+    Refresh,
+    Plus,
+    House,
+    InfoFilled,
+    Setting,
+    View,
+    Edit,
+    Delete
+  },
   setup() {
     const router = useRouter();
     const permissionStore = usePermissionStore();
@@ -162,7 +284,8 @@ export default {
       name: '',
       location: '',
       capacity: 10,
-      facilities: '',
+      equipment: '',
+      description: '',
       status: 1
     });
     
@@ -245,7 +368,8 @@ export default {
       roomForm.name = '';
       roomForm.location = '';
       roomForm.capacity = 10;
-      roomForm.facilities = '';
+      roomForm.equipment = '';
+      roomForm.description = '';
       roomForm.status = 1;
       dialogVisible.value = true;
     };
@@ -257,7 +381,8 @@ export default {
       roomForm.name = row.name;
       roomForm.location = row.location;
       roomForm.capacity = row.capacity;
-      roomForm.facilities = row.facilities || '';
+      roomForm.equipment = row.equipment || '';
+      roomForm.description = row.description || '';
       roomForm.status = row.status;
       dialogVisible.value = true;
     };
@@ -397,16 +522,105 @@ export default {
 <style scoped>
 .room-container {
   padding: 20px;
+  width: 100%;
+  box-sizing: border-box;
+  background-color: #f5f7fa;
+  min-height: 100vh;
+}
+
+.page-header {
+  margin-bottom: 20px;
+}
+
+.page-header h1 {
+  font-size: 24px;
+  color: #303133;
+  margin-bottom: 8px;
+}
+
+.header-description {
+  color: #909399;
+  font-size: 14px;
+}
+
+.filter-card {
+  margin-bottom: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+}
+
+.data-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #ebeef5;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #303133;
+}
+
+.card-subtitle {
+  font-size: 13px;
+  color: #909399;
 }
 
 .toolbar {
   margin-bottom: 20px;
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
+  align-items: center;
 }
 
-.el-pagination {
+.button-group {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.pagination {
   margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+  padding: 15px;
+}
+
+.header-with-icon {
+  display: flex;
+  align-items: center;
   justify-content: center;
+  gap: 5px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.action-buttons .el-button {
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .button-group {
+    margin-left: 0;
+    justify-content: flex-end;
+  }
 }
 </style> 

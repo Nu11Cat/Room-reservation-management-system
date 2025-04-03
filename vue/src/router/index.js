@@ -148,6 +148,16 @@ const routes = [
           roles: [1], // 只有最高管理员可访问
           title: '操作日志'
         }
+      },
+      {
+        path: '/system/permission',
+        name: 'PermissionManagement',
+        component: () => import('@/components/PermissionManagement.vue'),
+        meta: {
+          requiresAuth: true,
+          roles: [1], // 只有管理员可访问
+          title: '权限管理'
+        }
       }
     ]
   },

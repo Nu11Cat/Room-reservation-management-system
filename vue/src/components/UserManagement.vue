@@ -1,78 +1,169 @@
 <template>
   <div class="user-container">
-    <h1>用户管理</h1>
-    <div class="toolbar">
-      <el-input v-model="searchInput" placeholder="搜索用户名" style="width: 300px" clearable />
-      <el-button type="primary" @click="handleSearch">搜索</el-button>
-      <el-button type="success" @click="handleAdd">添加用户</el-button>
+    <div class="page-header">
+      <h1>用户管理</h1>
+      <div class="header-description">管理系统用户账号、角色和权限</div>
     </div>
-    <el-table :data="userList" border style="width: 100%" v-loading="loading">
-      <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column prop="username" label="用户名">
-        <template #default="scope">
-          {{ scope.row.username || '未设置' }}
-        </template>
-      </el-table-column>
-      <el-table-column prop="realName" label="真实姓名" width="120">
-        <template #default="scope">
-          {{ scope.row.realName || '未设置' }}
-        </template>
-      </el-table-column>
-      <el-table-column prop="email" label="邮箱" width="180">
-        <template #default="scope">
-          {{ scope.row.email || '未设置' }}
-        </template>
-      </el-table-column>
-      <el-table-column prop="phone" label="电话" width="140">
-        <template #default="scope">
-          {{ scope.row.phone || '未设置' }}
-        </template>
-      </el-table-column>
-      <el-table-column prop="roleName" label="角色" width="120">
-        <template #default="scope">
-          <span v-if="scope.row.roleId === 1">管理员</span>
-          <span v-else-if="scope.row.roleId === 2">普通用户</span>
-          <span v-else-if="scope.row.roleId === 3">审批人</span>
-          <span v-else>未知角色</span>
-        </template>
-      </el-table-column>
-      <el-table-column prop="createTime" label="创建时间" width="180">
-        <template #default="scope">
-          {{ formatDateTime(scope.row.createTime) }}
-        </template>
-      </el-table-column>
-      <el-table-column prop="status" label="状态" width="100">
-        <template #default="scope">
-          <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'">
-            {{ scope.row.status === 1 ? '启用' : '禁用' }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" width="300">
-        <template #default="scope">
-          <div class="operation-buttons">
-            <el-button size="small" type="info" @click="handleView(scope.row)">查看</el-button>
-            <el-button size="small" type="primary" @click="handleEdit(scope.row)">编辑</el-button>
-            <el-button size="small" :type="scope.row.status === 1 ? 'danger' : 'success'" @click="handleToggleStatus(scope.row)">
-              {{ scope.row.status === 1 ? '禁用' : '启用' }}
-            </el-button>
-          </div>
-        </template>
-      </el-table-column>
-    </el-table>
     
-    <el-pagination
-      layout="total, sizes, prev, pager, next, jumper"
-      :total="total"
-      :page-size="pageSize"
-      :current-page="currentPage"
-      @size-change="handleSizeChange"
-      @current-change="handleCurrentChange"
-      class="pagination"
-    />
+    <el-card class="filter-card">
+      <div class="toolbar">
+        <div class="search-area">
+          <el-input 
+            v-model="searchInput" 
+            placeholder="输入用户名搜索" 
+            style="width: 300px" 
+            clearable
+            prefix-icon="Search"
+          />
+          <el-button type="primary" @click="handleSearch">
+            <el-icon><Search /></el-icon>
+            搜索
+          </el-button>
+        </div>
+        <el-button type="success" @click="handleAdd" class="add-button">
+          <el-icon><Plus /></el-icon>
+          添加用户
+        </el-button>
+      </div>
+    </el-card>
+    
+    <el-card class="data-card" :body-style="{ padding: '0px' }">
+      <div class="card-header">
+        <span class="card-title">用户列表</span>
+        <span class="card-subtitle">共 {{ total }} 条记录</span>
+      </div>
+      <el-table 
+        :data="userList" 
+        border 
+        style="width: 100%" 
+        v-loading="loading"
+        :header-cell-style="{ 
+          background: '#f5f7fa', 
+          color: '#606266', 
+          fontWeight: 'bold' 
+        }"
+        :row-class-name="tableRowClassName"
+      >
+        <el-table-column prop="id" label="ID" width="80" align="center" />
+        <el-table-column prop="username" label="用户名" align="center">
+          <template #header>
+            <div class="header-with-icon">
+              <el-icon><User /></el-icon>
+              <span>用户名</span>
+            </div>
+          </template>
+          <template #default="scope">
+            <span>{{ scope.row.username || '未设置' }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="realName" label="真实姓名" width="120" align="center">
+          <template #default="scope">
+            {{ scope.row.realName || '未设置' }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="email" label="邮箱" width="180" align="center">
+          <template #header>
+            <div class="header-with-icon">
+              <el-icon><Message /></el-icon>
+              <span>邮箱</span>
+            </div>
+          </template>
+          <template #default="scope">
+            <span v-if="scope.row.email">
+              {{ scope.row.email }}
+            </span>
+            <span v-else class="text-muted">未设置</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="phone" label="电话" width="140" align="center">
+          <template #header>
+            <div class="header-with-icon">
+              <el-icon><Phone /></el-icon>
+              <span>电话</span>
+            </div>
+          </template>
+          <template #default="scope">
+            <span v-if="scope.row.phone">
+              {{ scope.row.phone }}
+            </span>
+            <span v-else class="text-muted">未设置</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="roleName" label="角色" width="120" align="center">
+          <template #default="scope">
+            <el-tag v-if="scope.row.roleId === 1" type="danger" effect="dark">管理员</el-tag>
+            <el-tag v-else-if="scope.row.roleId === 2" type="info" effect="plain">普通用户</el-tag>
+            <el-tag v-else-if="scope.row.roleId === 3" type="warning" effect="dark">审批人</el-tag>
+            <el-tag v-else type="info">未知角色</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="createTime" label="创建时间" width="180" align="center">
+          <template #header>
+            <div class="header-with-icon">
+              <el-icon><Calendar /></el-icon>
+              <span>创建时间</span>
+            </div>
+          </template>
+          <template #default="scope">
+            <span>{{ formatDateTime(scope.row.createTime) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="status" label="状态" width="100" align="center">
+          <template #default="scope">
+            <el-tag 
+              :type="scope.row.status === 1 ? 'success' : 'danger'"
+              effect="dark"
+            >
+              {{ scope.row.status === 1 ? '启用' : '禁用' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="300" align="center" fixed="right">
+          <template #default="scope">
+            <div class="operation-buttons">
+              <el-button size="small" type="info" @click="handleView(scope.row)" class="action-button">
+                <el-icon><View /></el-icon>
+                查看
+              </el-button>
+              <el-button size="small" type="primary" @click="handleEdit(scope.row)" class="action-button">
+                <el-icon><Edit /></el-icon>
+                编辑
+              </el-button>
+              <el-button 
+                size="small" 
+                :type="scope.row.status === 1 ? 'danger' : 'success'" 
+                @click="handleToggleStatus(scope.row)"
+                class="action-button"
+              >
+                <el-icon v-if="scope.row.status === 1"><Lock /></el-icon>
+                <el-icon v-else><Unlock /></el-icon>
+                {{ scope.row.status === 1 ? '禁用' : '启用' }}
+              </el-button>
+            </div>
+          </template>
+        </el-table-column>
+      </el-table>
+      
+      <el-pagination
+        layout="total, sizes, prev, pager, next, jumper"
+        :total="total"
+        :page-size="pageSize"
+        :current-page="currentPage"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+        class="pagination"
+        background
+      />
+    </el-card>
 
     <!-- 添加/编辑用户对话框 -->
-    <el-dialog :title="dialogTitle" v-model="dialogVisible" width="500px">
+    <el-dialog 
+      :title="dialogTitle" 
+      v-model="dialogVisible" 
+      width="500px"
+      destroy-on-close
+      :close-on-click-modal="false"
+    >
       <el-form :model="userForm" :rules="userRules" ref="userFormRef" label-width="100px">
         <el-form-item label="用户名" prop="username">
           <el-input v-model="userForm.username" :disabled="dialogType === 'edit'" />
@@ -81,35 +172,76 @@
           <el-input v-model="userForm.password" type="password" show-password />
         </el-form-item>
         <el-form-item label="邮箱" prop="email">
-          <el-input v-model="userForm.email" />
+          <el-input v-model="userForm.email">
+            <template #prefix>
+              <el-icon><Message /></el-icon>
+            </template>
+          </el-input>
         </el-form-item>
         <el-form-item label="真实姓名" prop="realName">
-          <el-input v-model="userForm.realName" />
+          <el-input v-model="userForm.realName">
+            <template #prefix>
+              <el-icon><User /></el-icon>
+            </template>
+          </el-input>
         </el-form-item>
         <el-form-item label="手机号码" prop="phone">
-          <el-input v-model="userForm.phone" />
+          <el-input v-model="userForm.phone">
+            <template #prefix>
+              <el-icon><Phone /></el-icon>
+            </template>
+          </el-input>
         </el-form-item>
         <el-form-item label="角色" prop="roleId">
-          <el-select v-model="userForm.roleId" placeholder="请选择角色">
-            <el-option label="管理员" :value="1" />
-            <el-option label="普通用户" :value="2" />
-            <el-option label="审批人" :value="3" />
+          <el-select v-model="userForm.roleId" placeholder="请选择角色" style="width: 100%">
+            <el-option label="管理员" :value="1">
+              <div class="role-option">
+                <el-tag type="danger" effect="dark">管理员</el-tag>
+                <span class="role-description">拥有所有权限</span>
+              </div>
+            </el-option>
+            <el-option label="普通用户" :value="2">
+              <div class="role-option">
+                <el-tag type="info" effect="plain">普通用户</el-tag>
+                <span class="role-description">基础预订功能</span>
+              </div>
+            </el-option>
+            <el-option label="审批人" :value="3">
+              <div class="role-option">
+                <el-tag type="warning" effect="dark">审批人</el-tag>
+                <span class="role-description">审批预订请求</span>
+              </div>
+            </el-option>
           </el-select>
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitUserForm" :loading="submitLoading">确定</el-button>
+        <el-button @click="dialogVisible = false" class="dialog-button">取消</el-button>
+        <el-button type="primary" @click="submitUserForm" :loading="submitLoading" class="dialog-button">确定</el-button>
       </template>
     </el-dialog>
 
     <!-- 查看用户详情对话框 -->
-    <el-dialog title="用户详情" v-model="viewDialogVisible" width="500px">
+    <el-dialog 
+      title="用户详情" 
+      v-model="viewDialogVisible" 
+      width="550px"
+      destroy-on-close
+      :close-on-click-modal="false"
+    >
       <el-descriptions :column="1" border>
-        <el-descriptions-item label="ID">{{ viewUser.id }}</el-descriptions-item>
-        <el-descriptions-item label="用户名">{{ viewUser.username }}</el-descriptions-item>
+        <el-descriptions-item label="ID">
+          <el-tag type="info">{{ viewUser.id }}</el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="用户名">
+          <div class="detail-item">
+            <el-icon><User /></el-icon>
+            {{ viewUser.username }}
+          </div>
+        </el-descriptions-item>
         <el-descriptions-item label="密码">
           <div class="password-field">
+            <el-icon><Key /></el-icon>
             <span v-if="!passwordVisible">••••••••</span>
             <span v-else>{{ viewUser.password || '未设置' }}</span>
             <el-icon class="password-toggle" @click="passwordVisible = !passwordVisible">
@@ -118,25 +250,57 @@
             </el-icon>
           </div>
         </el-descriptions-item>
-        <el-descriptions-item label="真实姓名">{{ viewUser.realName || '未设置' }}</el-descriptions-item>
-        <el-descriptions-item label="邮箱">{{ viewUser.email || '未设置' }}</el-descriptions-item>
-        <el-descriptions-item label="手机号码">{{ viewUser.phone || '未设置' }}</el-descriptions-item>
+        <el-descriptions-item label="真实姓名">
+          <div class="detail-item">
+            <el-icon><UserFilled /></el-icon>
+            {{ viewUser.realName || '未设置' }}
+          </div>
+        </el-descriptions-item>
+        <el-descriptions-item label="邮箱">
+          <div class="detail-item">
+            <el-icon><Message /></el-icon>
+            {{ viewUser.email || '未设置' }}
+          </div>
+        </el-descriptions-item>
+        <el-descriptions-item label="手机号码">
+          <div class="detail-item">
+            <el-icon><Phone /></el-icon>
+            {{ viewUser.phone || '未设置' }}
+          </div>
+        </el-descriptions-item>
         <el-descriptions-item label="角色">
-          <span v-if="viewUser.roleId === 1">管理员</span>
-          <span v-else-if="viewUser.roleId === 2">普通用户</span>
-          <span v-else-if="viewUser.roleId === 3">审批人</span>
-          <span v-else>未知角色</span>
+          <div class="detail-item">
+            <el-icon><Medal /></el-icon>
+            <el-tag v-if="viewUser.roleId === 1" type="danger" effect="dark">管理员</el-tag>
+            <el-tag v-else-if="viewUser.roleId === 2" type="info" effect="plain">普通用户</el-tag>
+            <el-tag v-else-if="viewUser.roleId === 3" type="warning" effect="dark">审批人</el-tag>
+            <el-tag v-else type="info">未知角色</el-tag>
+          </div>
         </el-descriptions-item>
         <el-descriptions-item label="状态">
-          <el-tag :type="viewUser.status === 1 ? 'success' : 'danger'">
-            {{ viewUser.status === 1 ? '启用' : '禁用' }}
-          </el-tag>
+          <div class="detail-item">
+            <el-icon v-if="viewUser.status === 1"><CircleCheck /></el-icon>
+            <el-icon v-else><CircleClose /></el-icon>
+            <el-tag :type="viewUser.status === 1 ? 'success' : 'danger'" effect="dark">
+              {{ viewUser.status === 1 ? '启用' : '禁用' }}
+            </el-tag>
+          </div>
         </el-descriptions-item>
-        <el-descriptions-item label="创建时间">{{ formatDateTime(viewUser.createTime) }}</el-descriptions-item>
-        <el-descriptions-item label="更新时间">{{ formatDateTime(viewUser.updateTime) }}</el-descriptions-item>
+        <el-descriptions-item label="创建时间">
+          <div class="detail-item">
+            <el-icon><Calendar /></el-icon>
+            {{ formatDateTime(viewUser.createTime) }}
+          </div>
+        </el-descriptions-item>
+        <el-descriptions-item label="更新时间">
+          <div class="detail-item">
+            <el-icon><Timer /></el-icon>
+            {{ formatDateTime(viewUser.updateTime) }}
+          </div>
+        </el-descriptions-item>
       </el-descriptions>
       <template #footer>
-        <el-button @click="viewDialogVisible = false">关闭</el-button>
+        <el-button type="primary" @click="viewDialogVisible = false" class="dialog-button">关闭</el-button>
       </template>
     </el-dialog>
   </div>
@@ -146,13 +310,46 @@
 import { ref, reactive, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { getAllUsers, addUser, editUser, banUser, getUserById } from '@/api/user';
-import { View, Hide } from '@element-plus/icons-vue';
+import { 
+  View, 
+  Hide, 
+  Search, 
+  Plus, 
+  Edit, 
+  User,
+  UserFilled,
+  Phone, 
+  Message, 
+  Lock, 
+  Unlock, 
+  Calendar,
+  Timer,
+  CircleCheck,
+  CircleClose,
+  Key,
+  Medal
+} from '@element-plus/icons-vue';
 
 export default {
   name: 'UserManagementPage',
   components: {
     View,
-    Hide
+    Hide,
+    Search,
+    Plus,
+    Edit,
+    User,
+    UserFilled,
+    Phone,
+    Message,
+    Lock,
+    Unlock,
+    Calendar,
+    Timer,
+    CircleCheck,
+    CircleClose,
+    Key,
+    Medal
   },
   setup() {
     const loading = ref(false);
@@ -202,6 +399,14 @@ export default {
         { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }
       ],
       roleId: [{ required: true, message: '请选择角色', trigger: 'change' }]
+    };
+    
+    // 表格行样式
+    const tableRowClassName = ({ row }) => {
+      if (row.status === 0) {
+        return 'disabled-row';
+      }
+      return '';
     };
     
     // 格式化日期时间
@@ -433,6 +638,7 @@ export default {
       viewDialogVisible,
       viewUser,
       passwordVisible,
+      tableRowClassName,
       formatDateTime,
       handleSearch,
       handleAdd,
@@ -450,16 +656,73 @@ export default {
 <style scoped>
 .user-container {
   padding: 20px;
+  background-color: #f5f7fa;
+  min-height: 100vh;
+}
+
+.page-header {
+  margin-bottom: 20px;
+}
+
+.page-header h1 {
+  font-size: 24px;
+  color: #303133;
+  margin-bottom: 8px;
+}
+
+.header-description {
+  color: #909399;
+  font-size: 14px;
+}
+
+.filter-card {
+  margin-bottom: 20px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+}
+
+.data-card {
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+}
+
+.card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #ebeef5;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #303133;
+}
+
+.card-subtitle {
+  font-size: 13px;
+  color: #909399;
 }
 
 .toolbar {
-  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.search-area {
   display: flex;
   gap: 10px;
 }
 
+.add-button {
+  display: flex;
+  align-items: center;
+}
+
 .pagination {
-  margin-top: 20px;
+  margin: 20px;
   display: flex;
   justify-content: flex-end;
 }
@@ -468,16 +731,70 @@ export default {
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
+  justify-content: center;
+}
+
+.action-button {
+  display: flex;
+  align-items: center;
+}
+
+.text-muted {
+  color: #909399;
+  font-style: italic;
 }
 
 .password-field {
   display: flex;
   align-items: center;
+  gap: 8px;
 }
 
 .password-toggle {
-  margin-left: 10px;
   cursor: pointer;
   color: #409EFF;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.role-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.role-description {
+  color: #909399;
+  font-size: 13px;
+}
+
+.dialog-button {
+  min-width: 80px;
+}
+
+/* 禁用行样式 */
+:deep(.disabled-row) {
+  background-color: #f9f9f9;
+  color: #999;
+}
+
+/* 状态徽章样式 */
+.status-badge :deep(.el-badge__content) {
+  font-size: 12px;
+  height: 18px;
+  line-height: 18px;
+  padding: 0 6px;
+  border: none;
+}
+
+.header-with-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
 }
 </style> 

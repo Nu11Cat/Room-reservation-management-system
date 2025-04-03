@@ -39,6 +39,7 @@ service.interceptors.response.use(
     return response.data;
   },
   error => {
+    // 检查错误响应
     if (error.response) {
       // 检查是否为用户封禁错误
       if (error.response.data && error.response.data.msg === 'USER_BANNED') {
@@ -50,9 +51,16 @@ service.interceptors.response.use(
         return Promise.reject(error);
       }
       
+      // 对于500错误，不显示任何消息，由业务代码处理
+      if (error.response.status === 500) {
+        // 静默处理500错误，只向控制台输出日志
+        console.error('服务器返回500错误:', error);
+        return Promise.reject(error);
+      }
+      
+      // 根据不同状态码处理错误
       switch (error.response.status) {
         case 401:
-          // token过期或未登录
           ElMessage.error('请重新登录');
           router.push('/login');
           break;
@@ -63,8 +71,9 @@ service.interceptors.response.use(
         case 404:
           ElMessage.error('请求的资源不存在');
           break;
-        case 500:
-          ElMessage.error('服务器错误');
+        case 405:
+          // 方法不允许，静默处理
+          console.error('方法不允许(405):', error);
           break;
         default:
           ElMessage.error(error.message || '请求失败');

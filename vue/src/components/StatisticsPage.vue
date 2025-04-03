@@ -1,9 +1,11 @@
 <template>
   <div class="statistics-container">
-    <h1>会议室统计分析</h1>
+    <div class="page-header">
+      <h1>会议室统计分析</h1>
+    </div>
     
     <!-- 日期范围选择器 -->
-    <div class="filter-section">
+    <el-card class="filter-card">
       <el-form :inline="true" class="date-form">
         <el-form-item label="统计时间范围">
           <el-date-picker
@@ -14,7 +16,11 @@
             end-placeholder="结束日期"
             value-format="YYYY-MM-DD"
             @change="handleDateChange"
-          />
+          >
+            <template #prefix>
+              <el-icon><Calendar /></el-icon>
+            </template>
+          </el-date-picker>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="loadAllStatistics">
@@ -23,7 +29,7 @@
           </el-button>
         </el-form-item>
       </el-form>
-    </div>
+    </el-card>
     
     <!-- 加载状态 -->
     <div v-if="loading" class="loading-container">
@@ -32,43 +38,47 @@
     
     <!-- 统计汇总卡片 -->
     <div v-else class="statistics-content">
-      <div class="summary-cards">
-        <el-row :gutter="20">
-          <el-col :span="8">
-            <el-card class="summary-card" shadow="hover">
-              <template #header>
-                <div class="card-header">
-                  <el-icon><Calendar /></el-icon>
-                  <span>总预订数</span>
-                </div>
-              </template>
+      <el-row :gutter="20" class="summary-row">
+        <el-col :xs="24" :sm="24" :md="8" :lg="8" :xl="8">
+          <el-card class="summary-card" shadow="hover">
+            <template #header>
+              <div class="card-header">
+                <el-icon><Calendar /></el-icon>
+                <span>总预订数</span>
+              </div>
+            </template>
+            <div class="card-body">
               <div class="summary-value">{{ summaryData.totalBookings || 0 }}</div>
-            </el-card>
-          </el-col>
-          <el-col :span="8">
-            <el-card class="summary-card" shadow="hover">
-              <template #header>
-                <div class="card-header">
-                  <el-icon><OfficeBuilding /></el-icon>
-                  <span>总会议室数</span>
-                </div>
-              </template>
+            </div>
+          </el-card>
+        </el-col>
+        <el-col :xs="24" :sm="24" :md="8" :lg="8" :xl="8">
+          <el-card class="summary-card" shadow="hover">
+            <template #header>
+              <div class="card-header">
+                <el-icon><OfficeBuilding /></el-icon>
+                <span>总会议室数</span>
+              </div>
+            </template>
+            <div class="card-body">
               <div class="summary-value">{{ summaryData.totalRooms || 0 }}</div>
-            </el-card>
-          </el-col>
-          <el-col :span="8">
-            <el-card class="summary-card" shadow="hover">
-              <template #header>
-                <div class="card-header">
-                  <el-icon><User /></el-icon>
-                  <span>总用户数</span>
-                </div>
-              </template>
+            </div>
+          </el-card>
+        </el-col>
+        <el-col :xs="24" :sm="24" :md="8" :lg="8" :xl="8">
+          <el-card class="summary-card" shadow="hover">
+            <template #header>
+              <div class="card-header">
+                <el-icon><User /></el-icon>
+                <span>总用户数</span>
+              </div>
+            </template>
+            <div class="card-body">
               <div class="summary-value">{{ summaryData.totalUsers || 0 }}</div>
-            </el-card>
-          </el-col>
-        </el-row>
-      </div>
+            </div>
+          </el-card>
+        </el-col>
+      </el-row>
       
       <!-- 会议室使用率统计 -->
       <el-card class="chart-card">
@@ -77,18 +87,22 @@
             <span>会议室预订频率统计</span>
           </div>
         </template>
-        <el-table :data="roomUsageData" style="width: 100%" border stripe>
-          <el-table-column prop="roomName" label="会议室名称" />
-          <el-table-column prop="location" label="位置" />
-          <el-table-column prop="capacity" label="容量" />
-          <el-table-column prop="bookingCount" label="预约次数" />
-          <el-table-column prop="usageRate" label="预订频率">
+        <el-table :data="roomUsageData" style="width: 100%" border stripe :header-cell-style="tableHeaderStyle">
+          <el-table-column prop="roomName" label="会议室名称" align="center" />
+          <el-table-column prop="location" label="位置" align="center" />
+          <el-table-column prop="capacity" label="容量" align="center" />
+          <el-table-column prop="bookingCount" label="预约次数" align="center" />
+          <el-table-column prop="usageRate" label="预订频率" align="center">
             <template #default="scope">
-              <el-progress 
-                :percentage="scope.row.usageRate" 
-                :format="(p) => p + '%'" 
-                :color="getProgressColor(scope.row.usageRate)" 
-              />
+              <div class="percentage-display">
+                <div>{{ scope.row.usageRate }}%</div>
+                <el-progress 
+                  :percentage="scope.row.usageRate" 
+                  :color="getProgressColor(scope.row.usageRate)" 
+                  :stroke-width="12"
+                  :show-text="false"
+                />
+              </div>
             </template>
           </el-table-column>
         </el-table>
@@ -101,25 +115,31 @@
             <span>预订状态统计</span>
           </div>
         </template>
-        <el-row>
-          <el-col :span="12">
-            <div v-if="bookingStatusData.length === 0" class="empty-chart">
-              <el-empty description="暂无状态统计数据" />
-            </div>
-            <div v-else class="chart-container" ref="bookingStatusChart"></div>
-          </el-col>
-          <el-col :span="12">
-            <el-table :data="bookingStatusData" style="width: 100%" border stripe>
-              <el-table-column prop="statusName" label="状态" />
-              <el-table-column prop="count" label="数量" />
-              <el-table-column prop="percentage" label="占比">
-                <template #default="scope">
-                  {{ scope.row.percentage }}%
-                </template>
-              </el-table-column>
-            </el-table>
-          </el-col>
-        </el-row>
+        <div class="full-width-table">
+          <el-table 
+            :data="bookingStatusData" 
+            border 
+            stripe 
+            style="width: 100%"
+            :header-cell-style="tableHeaderStyle"
+          >
+            <el-table-column prop="statusName" label="状态" align="center" />
+            <el-table-column prop="count" label="数量" align="center" />
+            <el-table-column prop="percentage" label="占比" align="center">
+              <template #default="scope">
+                <div class="percentage-display">
+                  <div>{{ scope.row.percentage }}%</div>
+                  <el-progress 
+                    :percentage="scope.row.percentage" 
+                    :color="getProgressColor(scope.row.percentage)"
+                    :stroke-width="12"
+                    :show-text="false"
+                  />
+                </div>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
       </el-card>
       
       <!-- 用户预订排名 -->
@@ -129,18 +149,28 @@
             <span>用户预订排名</span>
           </div>
         </template>
-        <el-table :data="userRankingData" style="width: 100%" border stripe>
-          <el-table-column type="index" label="排名" width="80" />
-          <el-table-column prop="username" label="用户名" />
-          <el-table-column prop="realName" label="真实姓名" />
-          <el-table-column prop="bookingCount" label="预订次数" />
-          <el-table-column label="占比">
+        <el-table 
+          :data="userRankingData" 
+          style="width: 100%" 
+          border 
+          stripe 
+          :header-cell-style="tableHeaderStyle"
+        >
+          <el-table-column type="index" label="排名" width="80" align="center" />
+          <el-table-column prop="username" label="用户名" align="center" />
+          <el-table-column prop="realName" label="真实姓名" align="center" />
+          <el-table-column prop="bookingCount" label="预订次数" align="center" />
+          <el-table-column label="占比" align="center">
             <template #default="scope">
-              <el-progress 
-                :percentage="calculatePercentage(scope.row.bookingCount)" 
-                :format="(p) => p.toFixed(1) + '%'" 
-                :color="getProgressColor(calculatePercentage(scope.row.bookingCount))" 
-              />
+              <div class="percentage-display">
+                <div>{{ calculatePercentage(scope.row.bookingCount).toFixed(1) }}%</div>
+                <el-progress 
+                  :percentage="calculatePercentage(scope.row.bookingCount)" 
+                  :color="getProgressColor(calculatePercentage(scope.row.bookingCount))" 
+                  :stroke-width="12"
+                  :show-text="false"
+                />
+              </div>
             </template>
           </el-table-column>
         </el-table>
@@ -153,54 +183,40 @@
             <span>会议时长统计</span>
           </div>
         </template>
-        <el-row>
-          <el-col :span="12">
-            <div v-if="meetingDurationData.length === 0" class="empty-chart">
-              <el-empty description="暂无时长统计数据" />
-            </div>
-            <div v-else class="chart-container" ref="meetingDurationChart"></div>
-          </el-col>
-          <el-col :span="12">
-            <el-table :data="meetingDurationData" style="width: 100%" border stripe>
-              <el-table-column prop="durationRange" label="时长范围" />
-              <el-table-column prop="count" label="数量" />
-              <el-table-column prop="percentage" label="占比">
-                <template #default="scope">
-                  {{ scope.row.percentage }}%
-                </template>
-              </el-table-column>
-            </el-table>
-          </el-col>
-        </el-row>
+        <div class="full-width-table">
+          <el-table 
+            :data="meetingDurationData" 
+            border 
+            stripe 
+            style="width: 100%"
+            :header-cell-style="tableHeaderStyle"
+          >
+            <el-table-column prop="durationRange" label="时长范围" align="center" />
+            <el-table-column prop="count" label="数量" align="center" />
+            <el-table-column prop="percentage" label="占比" align="center">
+              <template #default="scope">
+                <div class="percentage-display">
+                  <div>{{ scope.row.percentage }}%</div>
+                  <el-progress 
+                    :percentage="scope.row.percentage" 
+                    :color="getProgressColor(scope.row.percentage)"
+                    :stroke-width="12"
+                    :show-text="false"
+                  />
+                </div>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
       </el-card>
     </div>
   </div>
 </template>
 
 <script>
-import { ref, onMounted, nextTick, onUnmounted } from 'vue';
+import { ref, onMounted, reactive } from 'vue';
 import { Refresh, Calendar, OfficeBuilding, User } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
-// 按需导入ECharts
-import * as echarts from 'echarts/core';
-import { PieChart } from 'echarts/charts';
-import {
-  TitleComponent,
-  TooltipComponent,
-  GridComponent,
-  LegendComponent
-} from 'echarts/components';
-import { CanvasRenderer } from 'echarts/renderers';
-
-// 注册必需的组件
-echarts.use([
-  TitleComponent,
-  TooltipComponent,
-  GridComponent,
-  LegendComponent,
-  PieChart,
-  CanvasRenderer
-]);
 
 import {
   getAllStatistics
@@ -229,13 +245,13 @@ export default {
       totalUsers: 0
     });
     
-    // 图表引用
-    const bookingStatusChart = ref(null);
-    const meetingDurationChart = ref(null);
-    
-    // 图表实例
-    let statusChart = null;
-    let durationChart = null;
+    // 表格表头样式
+    const tableHeaderStyle = reactive({
+      background: '#f5f7fa',
+      color: '#606266',
+      fontWeight: 'bold',
+      textAlign: 'center'
+    });
     
     // 初始化日期范围（最近30天）
     const initDateRange = () => {
@@ -277,163 +293,6 @@ export default {
       return (count / totalBookings) * 100;
     };
     
-    // 初始化状态分布图表
-    const initStatusChart = () => {
-      if (!bookingStatusChart.value || bookingStatusData.value.length === 0) return;
-      
-      if (statusChart) {
-        statusChart.dispose();
-      }
-      
-      // 确保DOM元素渲染完成并有高度
-      nextTick(() => {
-        // 强制等待DOM渲染完成
-        setTimeout(() => {
-          if (!bookingStatusChart.value) return;
-          
-          try {
-            statusChart = echarts.init(bookingStatusChart.value);
-            
-            const statusData = bookingStatusData.value.map(item => ({
-              name: item.statusName,
-              value: item.count
-            }));
-            
-            const option = {
-              tooltip: {
-                trigger: 'item',
-                formatter: '{a} <br/>{b}: {c} ({d}%)'
-              },
-              legend: {
-                orient: 'vertical',
-                left: 10,
-                data: statusData.map(item => item.name)
-              },
-              series: [
-                {
-                  name: '预订状态',
-                  type: 'pie',
-                  radius: ['50%', '70%'],
-                  avoidLabelOverlap: false,
-                  label: {
-                    show: false,
-                    position: 'center'
-                  },
-                  emphasis: {
-                    label: {
-                      show: true,
-                      fontSize: '16',
-                      fontWeight: 'bold'
-                    }
-                  },
-                  labelLine: {
-                    show: false
-                  },
-                  data: statusData
-                }
-              ]
-            };
-            
-            statusChart.setOption(option);
-            
-            // 强制重新计算大小
-            statusChart.resize();
-          } catch (error) {
-            console.error('初始化状态图表出错:', error);
-          }
-        }, 100);
-      });
-    };
-    
-    // 初始化会议时长图表
-    const initDurationChart = () => {
-      if (!meetingDurationChart.value || meetingDurationData.value.length === 0) return;
-      
-      if (durationChart) {
-        durationChart.dispose();
-      }
-      
-      // 确保DOM元素渲染完成并有高度
-      nextTick(() => {
-        // 强制等待DOM渲染完成
-        setTimeout(() => {
-          if (!meetingDurationChart.value) return;
-          
-          try {
-            durationChart = echarts.init(meetingDurationChart.value);
-            
-            const durationData = meetingDurationData.value.map(item => ({
-              name: item.durationRange,
-              value: item.count
-            }));
-            
-            const option = {
-              tooltip: {
-                trigger: 'item',
-                formatter: '{a} <br/>{b}: {c} ({d}%)'
-              },
-              legend: {
-                orient: 'vertical',
-                left: 10,
-                data: durationData.map(item => item.name)
-              },
-              series: [
-                {
-                  name: '会议时长',
-                  type: 'pie',
-                  radius: ['50%', '70%'],
-                  avoidLabelOverlap: false,
-                  label: {
-                    show: false,
-                    position: 'center'
-                  },
-                  emphasis: {
-                    label: {
-                      show: true,
-                      fontSize: '16',
-                      fontWeight: 'bold'
-                    }
-                  },
-                  labelLine: {
-                    show: false
-                  },
-                  data: durationData
-                }
-              ]
-            };
-            
-            durationChart.setOption(option);
-            
-            // 强制重新计算大小
-            durationChart.resize();
-          } catch (error) {
-            console.error('初始化时长图表出错:', error);
-          }
-        }, 100);
-      });
-    };
-    
-    // 清理图表实例
-    const disposeCharts = () => {
-      if (statusChart) {
-        statusChart.dispose();
-        statusChart = null;
-      }
-      if (durationChart) {
-        durationChart.dispose();
-        durationChart = null;
-      }
-      
-      // 移除resize监听
-      window.removeEventListener('resize', handleResize);
-    };
-    
-    // 处理窗口大小变化
-    const handleResize = () => {
-      if (statusChart) statusChart.resize();
-      if (durationChart) durationChart.resize();
-    };
-    
     // 加载所有统计数据
     const loadAllStatistics = async () => {
       if (!dateRange.value || dateRange.value.length !== 2) {
@@ -468,13 +327,6 @@ export default {
             totalUsers: data.totalUsers || 0
           };
           
-          // 初始化图表
-          await nextTick();
-          initStatusChart();
-          initDurationChart();
-          
-          // 添加resize监听
-          window.addEventListener('resize', handleResize);
         } else {
           ElMessage.error(res.msg || '获取统计数据失败');
         }
@@ -491,11 +343,6 @@ export default {
       loadAllStatistics();
     });
     
-    // 添加组件卸载时的清理函数
-    onUnmounted(() => {
-      disposeCharts();
-    });
-    
     return {
       loading,
       dateRange,
@@ -504,8 +351,7 @@ export default {
       userRankingData,
       meetingDurationData,
       summaryData,
-      bookingStatusChart,
-      meetingDurationChart,
+      tableHeaderStyle,
       handleDateChange,
       loadAllStatistics,
       getProgressColor,
@@ -518,20 +364,31 @@ export default {
 <style scoped>
 .statistics-container {
   padding: 20px;
+  background-color: #f5f7fa;
+  min-height: 100vh;
 }
 
-.filter-section {
+.page-header {
   margin-bottom: 20px;
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 4px;
+  text-align: center;
+}
+
+.page-header h1 {
+  margin: 0;
+  color: #303133;
+  font-size: 24px;
+}
+
+.filter-card {
+  margin-bottom: 20px;
+  border-radius: 8px;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
 }
 
 .loading-container {
   padding: 20px;
   background-color: #fff;
-  border-radius: 4px;
+  border-radius: 8px;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
 }
 
@@ -539,23 +396,28 @@ export default {
   margin-top: 20px;
 }
 
-.summary-cards {
+.summary-row {
   margin-bottom: 20px;
 }
 
 .summary-card {
-  height: 120px;
+  height: auto;
   transition: all 0.3s;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
 }
 
 .summary-card:hover {
   transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
 }
 
 .card-header {
   display: flex;
   align-items: center;
   font-size: 16px;
+  padding: 15px 20px;
+  border-bottom: 1px solid #ebeef5;
 }
 
 .card-header .el-icon {
@@ -563,24 +425,47 @@ export default {
   font-size: 18px;
 }
 
+.card-body {
+  padding: 20px;
+}
+
 .summary-value {
-  font-size: 32px;
+  font-size: 36px;
   font-weight: bold;
   color: #409EFF;
   text-align: center;
-  margin-top: 10px;
 }
 
 .chart-card {
   margin-bottom: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.chart-wrapper {
+  padding: 0;
+}
+
+.chart-row {
+  margin: 0 !important;
+}
+
+.chart-col {
+  padding: 10px;
 }
 
 .chart-container {
-  height: 350px !important;
-  width: 100% !important;
-  min-height: 350px;
-  position: relative !important;
+  height: 350px;
+  width: 100%;
   display: block !important;
+  position: relative;
+}
+
+.table-container {
+  height: 350px;
+  width: 100%;
+  overflow: auto;
 }
 
 .empty-chart {
@@ -588,5 +473,41 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.chart-content {
+  padding: 10px;
+}
+
+@media (max-width: 768px) {
+  .chart-col {
+    margin-bottom: 20px;
+  }
+  
+  .summary-card {
+    margin-bottom: 20px;
+  }
+}
+
+/* 新增样式 */
+.full-width-table {
+  width: 100%;
+  padding: 20px;
+}
+
+.percentage-display {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.percentage-display .el-progress {
+  margin-top: 5px;
+}
+
+/* 修改卡片标题样式 */
+.card-header span {
+  font-weight: bold;
+  font-size: 16px;
 }
 </style> 
