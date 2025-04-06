@@ -31,7 +31,8 @@ export function getConfigList(configType) {
  * @param {Object} data 配置数据
  * @param {string} data.configKey 配置键名
  * @param {string} data.configValue 配置值
- * @param {string} data.remark 备注（可选）
+ * @param {string} data.configType 配置类型
+ * @param {string} data.description 配置描述（可选）
  * @returns {Promise}
  */
 export function updateConfig(data) {
@@ -52,5 +53,18 @@ export function batchGetConfig(keys) {
     url: '/system/config/batch',
     method: 'post',
     data: { keys }
+  });
+}
+
+/**
+ * 批量更新配置
+ * @param {Array} configs 配置数组，每项包含configKey和configValue
+ * @returns {Promise}
+ */
+export function batchUpdateConfig(configs) {
+  return request({
+    url: '/system/config/batch',
+    method: 'put',
+    data: { configs }
   });
 } 

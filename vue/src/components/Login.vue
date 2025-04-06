@@ -1,7 +1,7 @@
 <template>
   <div class="login-container">
     <div class="login-box">
-      <h2>会议室预订系统</h2>
+      <h2>{{ systemName }}</h2>
       <el-form :model="loginForm" :rules="loginRules" ref="loginFormRef">
         <el-form-item prop="username">
           <el-input v-model="loginForm.username" placeholder="用户名" prefix-icon="User" />
@@ -21,10 +21,11 @@
 </template>
 
 <script>
-import { ref, reactive } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import { useUserStore } from '@/stores/user';
+import { useConfigStore } from '@/stores/config';
 import { login } from '@/api/user';
 
 export default {
@@ -32,8 +33,28 @@ export default {
   setup() {
     const router = useRouter();
     const userStore = useUserStore();
+    const configStore = useConfigStore();
     const loginFormRef = ref(null);
     const loading = ref(false);
+
+    // 获取系统名称
+    const systemName = ref('会议室预约管理系统');
+    
+    // 初始化时尝试获取配置
+    onMounted(async () => {
+      if (!configStore.initialized) {
+        try {
+          await configStore.initialize();
+          if (configStore.systemName) {
+            systemName.value = configStore.systemName;
+          }
+        } catch (error) {
+          console.error('获取系统配置失败:', error);
+        }
+      } else if (configStore.systemName) {
+        systemName.value = configStore.systemName;
+      }
+    });
 
     const loginForm = reactive({
       username: '',
@@ -124,7 +145,8 @@ export default {
       loginRules,
       loginFormRef,
       loading,
-      handleLogin
+      handleLogin,
+      systemName
     };
   }
 };

@@ -6,6 +6,7 @@ import { createPinia } from 'pinia';
 import App from './App.vue';
 import router from './router';
 import { vButton, vOperation } from './directives/permission';
+import { useConfigStore } from './stores/config';
 
 const app = createApp(App);
 const pinia = createPinia();
@@ -21,6 +22,10 @@ app.directive('permission-operation', vOperation);
 app.use(ElementPlus);
 app.use(pinia);
 app.use(router);
+
+// 初始化配置store
+const configStore = useConfigStore();
+configStore.initialize();
 
 // 抑制 ResizeObserver 循环错误
 const resizeHandler = () => {

@@ -44,6 +44,33 @@ export function getBookingDetail(id) {
  * @returns {Promise}
  */
 export function addBooking(data) {
+  // 检查是否提供了所有必要字段
+  if (!data.roomId || !data.title || !data.startTime || !data.endTime) {
+    return Promise.reject({
+      response: {
+        data: {
+          code: 0,
+          msg: '缺少必要的预约信息'
+        }
+      }
+    });
+  }
+  
+  // 检查时间格式
+  const startTimePattern = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
+  const endTimePattern = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
+  
+  if (!startTimePattern.test(data.startTime) || !endTimePattern.test(data.endTime)) {
+    return Promise.reject({
+      response: {
+        data: {
+          code: 0,
+          msg: '时间格式不正确'
+        }
+      }
+    });
+  }
+  
   return request({
     url: '/bookings',
     method: 'post',
@@ -51,6 +78,11 @@ export function addBooking(data) {
   }).catch(error => {
     // 捕获500错误，将其转换为业务响应
     console.error('添加预订失败:', error);
+    
+    // 如果是服务器返回的错误，保留原始消息
+    if (error.response && error.response.data) {
+      return error.response.data;
+    }
     
     // 创建一个用户友好的错误响应
     return {

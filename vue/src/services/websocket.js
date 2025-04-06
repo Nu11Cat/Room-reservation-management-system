@@ -13,6 +13,9 @@ class WebSocketService {
     this.listeners = {};
     this.pingInterval = null;
     this.waitForConnection = null;
+    this.reconnectTimeout = null;
+    this.heartbeatInterval = null;
+    this.events = {};
   }
 
   /**
@@ -199,27 +202,33 @@ class WebSocketService {
   }
   
   /**
-   * 添加事件监听器
+   * 注册事件监听器
    * @param {string} event 事件名称
    * @param {Function} callback 回调函数
    */
   on(event, callback) {
-    if (!this.listeners[event]) {
-      this.listeners[event] = [];
+    if (!this.events[event]) {
+      this.events[event] = [];
     }
-    
-    this.listeners[event].push(callback);
+    this.events[event].push(callback);
+    return this;
   }
   
   /**
-   * 移除事件监听器
+   * 取消事件监听
    * @param {string} event 事件名称
-   * @param {Function} callback 要移除的回调函数
+   * @param {Function} callback 回调函数
    */
   off(event, callback) {
-    if (!this.listeners[event]) return;
+    if (!this.events[event]) return this;
     
-    this.listeners[event] = this.listeners[event].filter(cb => cb !== callback);
+    if (callback) {
+      this.events[event] = this.events[event].filter(cb => cb !== callback);
+    } else {
+      delete this.events[event];
+    }
+    
+    return this;
   }
   
   /**
@@ -228,13 +237,13 @@ class WebSocketService {
    * @param {any} data 事件数据
    */
   trigger(event, data) {
-    if (!this.listeners[event]) return;
+    if (!this.events[event]) return;
     
-    this.listeners[event].forEach(callback => {
+    this.events[event].forEach(callback => {
       try {
         callback(data);
       } catch (error) {
-        console.error(`执行事件 ${event} 监听器出错:`, error);
+        console.error(`执行${event}事件回调时出错:`, error);
       }
     });
   }

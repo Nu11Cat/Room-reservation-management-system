@@ -1,90 +1,84 @@
 <template>
   <div class="booking-container">
     <div class="page-header">
-      <h1>会议室预订</h1>
-      <div class="header-description">查看和预订可用会议室</div>
+      <div class="header-left">
+        <h1>
+          会议室预约
+          <el-tooltip
+            v-if="configLoaded"
+            :content="configStore.approvalRequired ? '预约需要审批：您的申请将提交给管理员审批，审批通过后才能使用会议室' : '预约自动通过：您的申请将自动通过，无需等待审批'"
+            placement="top"
+            effect="light"
+          >
+            <el-icon class="info-icon" :class="configStore.approvalRequired ? 'warning-icon' : 'success-icon'">
+              <InfoFilled />
+            </el-icon>
+          </el-tooltip>
+        </h1>
+        <div class="header-description">请选择日期和时间段预约会议室</div>
+      </div>
+      <div class="header-right">
+        <el-button @click="goBack" type="primary" plain>
+          <el-icon><Back /></el-icon>
+          返回会议室列表
+        </el-button>
+      </div>
     </div>
-    
+
+    <!-- 预约流程说明 -->
+    <!-- 移除了el-alert元素 -->
+
+    <!-- 配置加载提示 -->
+    <el-alert
+      v-if="false"
+      title="正在加载系统配置..."
+      type="info"
+      description="请等待系统配置加载完成后再进行预约操作"
+      show-icon
+      :closable="false"
+    />
+
+    <!-- 筛选条件卡片 -->
     <el-card class="filter-card">
       <div class="booking-header">
         <div class="date-selector">
-          <el-date-picker 
-            v-model="selectedDate" 
-            type="date" 
+          <el-date-picker
+            v-model="selectedDate"
+            type="date"
             placeholder="选择日期"
+            format="YYYY-MM-DD"
+            value-format="YYYY-MM-DD"
             :disabled-date="disabledDate"
             @change="handleDateChange"
-            format="YYYY年MM月DD日"
-            value-format="YYYY-MM-DD"
-            style="width: 240px"
           />
           <span class="date-display">{{ formatSelectedDate(selectedDate) }}</span>
         </div>
-        <el-button type="primary" size="small" @click="goBack">
-          <el-icon><Back /></el-icon>
-          返回列表
-        </el-button>
       </div>
-      
-      <!-- 筛选区域 -->
-      <div class="filter-container">
-        <el-row :gutter="20">
-          <el-col :span="6">
-            <el-input 
-              v-model="filterForm.name" 
-              placeholder="会议室名称" 
-              clearable 
-              @input="applyFilters"
-            >
-              <template #prefix>
-                <el-icon><Search /></el-icon>
-              </template>
-            </el-input>
-          </el-col>
-          <el-col :span="6">
-            <el-input 
-              v-model="filterForm.location" 
-              placeholder="会议室位置" 
-              clearable 
-              @input="applyFilters"
-            >
-              <template #prefix>
-                <el-icon><Location /></el-icon>
-              </template>
-            </el-input>
-          </el-col>
-          <el-col :span="6">
-            <el-select 
-              v-model="filterForm.capacity" 
-              placeholder="容纳人数" 
-              clearable 
-              @change="applyFilters"
-              style="width: 100%"
-            >
-              <el-option label=">10人" :value="10" />
-              <el-option label=">20人" :value="20" />
-              <el-option label=">30人" :value="30" />
-              <el-option label=">50人" :value="50" />
-              <el-option label=">100人" :value="100" />
-            </el-select>
-          </el-col>
-          <el-col :span="6">
-            <div class="filter-buttons">
-              <el-button type="primary" @click="applyFilters">
-                <el-icon><Search /></el-icon>
-                筛选
-              </el-button>
-              <el-button @click="resetFilters">
-                <el-icon><Refresh /></el-icon>
-                重置
-              </el-button>
-            </div>
-          </el-col>
-        </el-row>
-      </div>
+
+      <el-form :inline="true" :model="filterForm" class="filter-form">
+        <el-form-item label="名称">
+          <el-input v-model="filterForm.name" placeholder="会议室名称" clearable />
+        </el-form-item>
+        <el-form-item label="位置">
+          <el-input v-model="filterForm.location" placeholder="会议室位置" clearable />
+        </el-form-item>
+        <el-form-item label="容量">
+          <el-select v-model="filterForm.capacity" placeholder="请选择" clearable style="width: 120px">
+            <el-option label="10人以上" :value="10" />
+            <el-option label="20人以上" :value="20" />
+            <el-option label="30人以上" :value="30" />
+            <el-option label="50人以上" :value="50" />
+            <el-option label="100人以上" :value="100" />
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="applyFilters" :icon="Search">搜索</el-button>
+          <el-button @click="resetFilters">重置</el-button>
+        </el-form-item>
+      </el-form>
     </el-card>
     
-    <el-card class="booking-card">
+    <el-card class="booking-card" v-loading="loading">
       <div class="legend-container">
         <div class="time-legend">
           <div class="legend-item">
@@ -102,13 +96,13 @@
         </div>
       </div>
       
-      <div class="booking-table-wrapper" v-loading="loading">
+      <div class="booking-table-wrapper">
         <table class="booking-table">
           <thead>
             <tr>
-              <th class="room-info-header">会议室信息</th>
+              <th class="room-info-header">会议室</th>
               <th v-for="hour in timeRange" :key="hour" class="hour-column" :colspan="4">
-                {{ hour }}:00
+                {{ hour }}:00 - {{ hour + 1 }}:00
               </th>
             </tr>
             <tr class="time-row">
@@ -235,33 +229,39 @@
 </template>
 
 <script>
-import { ref, reactive, onMounted, computed } from 'vue';
+/* eslint-disable no-unused-vars */
+import { ref, reactive, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import { getRoomList } from '@/api/room';
 import { addBooking, getBookingList } from '@/api/booking';
+import { useConfigStore } from '@/stores/config';
+import useTimeOptions from '@/hooks/useTimeOptions';
+// eslint-disable-next-line no-unused-vars
 import { 
   Search, 
   Location, 
   UserFilled, 
   Calendar, 
+  // eslint-disable-next-line no-unused-vars
   Back, 
-  Refresh 
+  // eslint-disable-next-line no-unused-vars
+  Refresh,
+  InfoFilled
 } from '@element-plus/icons-vue';
 
 export default {
   name: 'RoomBookingPage',
   components: {
-    Search,
     Location,
     UserFilled,
     Calendar,
-    Back,
-    Refresh
+    InfoFilled
   },
   setup() {
     const route = useRoute();
     const router = useRouter();
+    const configStore = useConfigStore();
     const loading = ref(false);
     const bookingFormRef = ref(null);
     const rooms = ref([]);
@@ -269,6 +269,7 @@ export default {
     const bookings = ref([]);
     const bookingDialogVisible = ref(false);
     const selectedRoom = ref(null);
+    const configLoaded = ref(true); // 添加configLoaded变量定义
     
     // 筛选表单
     const filterForm = reactive({
@@ -334,21 +335,18 @@ export default {
     
     const selectedDate = ref(formatDate(new Date()));
     
-    // 时间范围（小时）
-    const timeRange = computed(() => {
-      // 生成8点到21点的数组
-      return Array.from({ length: 14 }, (_, i) => i + 8);
-    });
+    // 获取时间选项工具
+    const { 
+      timeRange, 
+      timeOptions, 
+      validateTimeRange, 
+      disabledDate: configDisabledDate,
+      refreshTimeOptions
+    } = useTimeOptions();
     
-    // 生成时间段列表
+    // 时间段列表
     const timeSlots = computed(() => {
-      const slots = [];
-      for (let hour of timeRange.value) {
-        for (let minute of ['00', '15', '30', '45']) {
-          slots.push(`${hour.toString().padStart(2, '0')}:${minute}`);
-        }
-      }
-      return slots;
+      return timeOptions.value.map(option => option.value);
     });
     
     const bookingForm = reactive({
@@ -358,6 +356,20 @@ export default {
       startTime: '',
       endTime: ''
     });
+    
+    // 验证时间范围
+    function validateTimeRangeRule(rule, value, callback) {
+      if (bookingForm.startTime && value) {
+        const result = validateTimeRange(bookingForm.startTime, value);
+        if (!result.valid) {
+          callback(new Error(result.message));
+        } else {
+          callback();
+        }
+      } else {
+        callback();
+      }
+    }
     
     const bookingRules = {
       title: [
@@ -373,22 +385,9 @@ export default {
       ],
       endTime: [
         { required: true, message: '请选择结束时间', trigger: 'change' },
-        { validator: validateTimeRange, trigger: 'change' }
+        { validator: validateTimeRangeRule, trigger: 'change' }
       ]
     };
-    
-    // 验证时间范围
-    function validateTimeRange(rule, value, callback) {
-      if (bookingForm.startTime && value) {
-        if (value <= bookingForm.startTime) {
-          callback(new Error('结束时间必须晚于开始时间'));
-        } else {
-          callback();
-        }
-      } else {
-        callback();
-      }
-    }
     
     // 判断时间是否应该禁用
     function isTimeDisabled(time, compareTime, type) {
@@ -402,6 +401,12 @@ export default {
         return time <= compareTime;
       }
     }
+    
+    // 日期禁用规则
+    const disabledDate = (date) => {
+      // 使用配置的日期禁用规则
+      return configDisabledDate(date);
+    };
     
     // 格式化选中日期显示
     const formatSelectedDate = (dateStr) => {
@@ -507,10 +512,25 @@ export default {
       bookingDialogVisible.value = true;
     };
     
-    // 提交预订
-    const submitBooking = async () => {
+    // 提交预订前的额外验证
+    const validateBookingBeforeSubmit = () => {
       if (!selectedRoom.value || !bookingForm.startTime || !bookingForm.endTime) {
         ElMessage.warning('请选择会议室和时间段');
+        return false;
+      }
+      
+      const result = validateTimeRange(bookingForm.startTime, bookingForm.endTime);
+      if (!result.valid) {
+        ElMessage.warning(result.message);
+        return false;
+      }
+      
+      return true;
+    };
+    
+    // 提交预订
+    const submitBooking = async () => {
+      if (!validateBookingBeforeSubmit()) {
         return;
       }
       
@@ -530,7 +550,12 @@ export default {
         const res = await addBooking(bookingData);
         
         if (res.code === 1) {
-          ElMessage.success('预订申请提交成功，等待审批');
+          // 根据configStore中的审批配置显示不同的成功消息
+          if (configStore.approvalRequired) {
+            ElMessage.success('预订申请提交成功，等待审批');
+          } else {
+            ElMessage.success('预订申请提交成功，已自动通过');
+          }
           bookingDialogVisible.value = false;
           // 重新加载预订记录
           await loadBookings();
@@ -557,9 +582,20 @@ export default {
       router.push('/room/list');
     };
     
+    // 强制刷新配置和时间选项
     onMounted(() => {
-      loadRoomList();
-      loadBookings();
+      // 确保从服务器获取最新配置
+      console.log('[RoomBooking] 组件挂载，强制刷新配置');
+      configStore.forceRefreshConfig().then(() => {
+        console.log('[RoomBooking] 配置刷新完成，开始刷新时间选项');
+        refreshTimeOptions();
+        console.log('[RoomBooking] 使用固定15分钟时间间隔');
+        
+        // 加载会议室和预订信息
+        loadRoomList();
+        loadBookings();
+      });
+      
       if (route.query.date) {
         selectedDate.value = route.query.date;
       }
@@ -586,7 +622,10 @@ export default {
       isTimeDisabled,
       filterForm,
       applyFilters,
-      resetFilters
+      resetFilters,
+      disabledDate,
+      configStore,
+      configLoaded
     };
   }
 };
@@ -603,12 +642,32 @@ export default {
 
 .page-header {
   margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  z-index: 1;
+}
+
+.header-right {
+  position: relative;
+  z-index: 2;
 }
 
 .page-header h1 {
   font-size: 24px;
   color: #303133;
   margin-bottom: 8px;
+  margin-top: 0;
 }
 
 .header-description {
@@ -862,5 +921,38 @@ export default {
   .filter-container .el-row .el-col {
     margin-bottom: 10px;
   }
+}
+
+.approval-alert {
+  margin-bottom: 20px;
+  border-radius: 8px;
+}
+
+.info-icon {
+  font-size: 16px;
+  margin-left: 5px;
+  vertical-align: middle;
+  cursor: help;
+}
+
+.warning-icon {
+  color: #E6A23C;
+}
+
+.success-icon {
+  color: #67C23A;
+}
+
+.time-slots-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.room-column {
+  font-weight: bold;
+  color: #303133;
+  font-size: 14px;
 }
 </style> 
