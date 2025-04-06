@@ -5,10 +5,12 @@ import cn.nullcat.sckj.exception.BusinessException;
 import cn.nullcat.sckj.mapper.ApprovalsMapper;
 import cn.nullcat.sckj.mapper.BookingsMapper;
 import cn.nullcat.sckj.mapper.RolePermissionMapper;
+import cn.nullcat.sckj.mapper.SystemConfigMapper;
 import cn.nullcat.sckj.mapper.UserMapper;
 import cn.nullcat.sckj.pojo.Booking;
-import cn.nullcat.sckj.pojo.PageBean;
+import cn.nullcat.sckj.pojo.SystemConfig;
 import cn.nullcat.sckj.pojo.User;
+import cn.nullcat.sckj.pojo.PageBean;
 import cn.nullcat.sckj.service.BookingsService;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
@@ -34,6 +36,8 @@ public class BookingsServiceImpl implements BookingsService {
     @Autowired
     private RolePermissionMapper rolePermissionMapper;
     @Autowired
+    private SystemConfigMapper systemConfigMapper;
+    @Autowired
     private HttpServletRequest request; // 添加这行
     /**
      * 获取预约列表
@@ -48,17 +52,17 @@ public class BookingsServiceImpl implements BookingsService {
      */
     @Override
     public PageBean getBookings(Integer page, Integer pageSize, Integer roomId, Integer userId, Integer status, LocalDate begin, LocalDate end) {
-        // 获取当前登录用户ID
-        Integer currentUserId = (Integer) request.getAttribute("userId");
-        User currentUser = userMapper.getById(currentUserId);
-
-        // 如果不是管理员或审批人，且没有指定查询用户，则只查询自己的预约
-        boolean hasManagePermission = rolePermissionMapper.hasPermission(currentUser.getRoleId(), "booking:manage");
-        boolean hasApprovalPermission = rolePermissionMapper.hasPermission(currentUser.getRoleId(), "booking:approve");
-
-        if (!hasManagePermission && !hasApprovalPermission && userId == null) {
-            userId = currentUserId;
-        }
+//        // 获取当前登录用户ID
+//        Integer currentUserId = (Integer) request.getAttribute("userId");
+//        User currentUser = userMapper.getById(currentUserId);
+//
+//        // 如果不是管理员或审批人，且没有指定查询用户，则只查询自己的预约
+//        boolean hasManagePermission = rolePermissionMapper.hasPermission(currentUser.getRoleId(), "booking:manage");
+//        boolean hasApprovalPermission = rolePermissionMapper.hasPermission(currentUser.getRoleId(), "booking:approve");
+//
+//        if (!hasManagePermission && !hasApprovalPermission && userId == null) {
+//            userId = currentUserId;
+//        }
 
 
         PageHelper.startPage(page, pageSize);
@@ -101,20 +105,34 @@ public class BookingsServiceImpl implements BookingsService {
     @Override
     @LogOperation(module = "预约管理", operation = "新增预约", description = "新增预约")
     public void addBooking(Booking booking) {
-        // 1. 设置初始状态
-        booking.setStatus(0);  // 待审批状态
         // 检查时间冲突
         if (hasConflict(booking.getRoomId(), booking.getStartTime(), booking.getEndTime(), null)) {
             throw new BusinessException("该时间段已被预约");
         }
-        // 2. 新增预约
+        
+        // 从系统配置中获取是否需要审批
+        SystemConfig approvalConfig = systemConfigMapper.getByConfigKey("APPROVAL_REQUIRED");
+        boolean approvalRequired = approvalConfig != null && 
+                                  ("true".equalsIgnoreCase(approvalConfig.getConfigValue()) || 
+                                   "1".equals(approvalConfig.getConfigValue()));
+        
+        // 设置初始状态 - 根据审批配置设置
+        if (approvalRequired) {
+            booking.setStatus(0);  // 待审批状态
+        } else {
+            booking.setStatus(1);  // 直接通过状态
+        }
+        
+        // 新增预约
         bookingsMapper.addBooking(booking);
-
-        // 3. 打印日志看看ID是否正确获取
+        
+        // 打印日志看看ID是否正确获取
         System.out.println("-*----------------------Generated booking ID: " + booking.getId());
-
-        // 4. 新增审批记录
-        approvalsMapper.addApproval(booking.getId());
+        
+        // 只有在需要审批的情况下才新增审批记录
+        if (approvalRequired) {
+            approvalsMapper.addApproval(booking.getId());
+        }
     }
 
     /**

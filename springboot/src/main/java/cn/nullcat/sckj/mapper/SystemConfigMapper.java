@@ -18,6 +18,13 @@ public interface SystemConfigMapper {
     SystemConfig getByConfigKey(String key);
 
     /**
+     * 获取所有配置
+     * @return 所有系统配置
+     */
+    @Select("select * from system_config where is_deleted = 0")
+    List<SystemConfig> getAllConfigs();
+
+    /**
      * 获取配置列表
      * @param configType
      * @return

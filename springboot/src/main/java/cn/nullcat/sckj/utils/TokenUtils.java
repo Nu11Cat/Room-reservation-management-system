@@ -8,6 +8,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.TimeUnit;
+import java.util.Date;
 
 @Slf4j
 @Component
@@ -48,8 +49,21 @@ public class TokenUtils {
     // 获取用户信息时解析JSON字符串
     public User getUserInfo(Integer userId) {
         String key = USER_PREFIX + userId;
-        String value = (String) redisTemplateForObject.opsForValue().get(key);
-        return value != null ? JSON.parseObject(value, User.class) : null;
+        Object value = redisTemplateForObject.opsForValue().get(key);
+        
+        if (value == null) {
+            return null;
+        }
+        
+        // 处理不同类型情况
+        if (value instanceof String) {
+            return JSON.parseObject((String)value, User.class);
+        } else if (value instanceof User) {
+            return (User)value;
+        } else {
+            // 如果是JSONObject，尝试转换为User对象
+            return JSON.parseObject(JSON.toJSONString(value), User.class);
+        }
     }
 
     // 删除用户信息
@@ -60,8 +74,44 @@ public class TokenUtils {
 
     // 更新用户信息
     public void updateUserInfo(User user) {
+        // 先获取现有的完整用户信息
         String key = USER_PREFIX + user.getId();
-        redisTemplateForObject.opsForValue().set(key, user, TOKEN_EXPIRE, TimeUnit.MILLISECONDS);
+        Object existingValue = redisTemplateForObject.opsForValue().get(key);
+        User completeUser = null;
+        
+        // 处理现有数据
+        if (existingValue != null) {
+            if (existingValue instanceof String) {
+                completeUser = JSON.parseObject((String)existingValue, User.class);
+            } else if (existingValue instanceof User) {
+                completeUser = (User)existingValue;
+            } else {
+                completeUser = JSON.parseObject(JSON.toJSONString(existingValue), User.class);
+            }
+        }
+        
+        // 如果有现有数据，合并新的字段值
+        if (completeUser != null) {
+            // 只更新不为null的字段
+            if (user.getEmail() != null) completeUser.setEmail(user.getEmail());
+            if (user.getPhone() != null) completeUser.setPhone(user.getPhone());
+            if (user.getPassword() != null) completeUser.setPassword(user.getPassword());
+            if (user.getRealName() != null) completeUser.setRealName(user.getRealName());
+            if (user.getAvatar() != null) completeUser.setAvatar(user.getAvatar());
+            if (user.getStatus() != null) completeUser.setStatus(user.getStatus());
+            if (user.getRoleId() != null) completeUser.setRoleId(user.getRoleId());
+            if (user.getIsDeleted() != null) completeUser.setIsDeleted(user.getIsDeleted());
+            
+            // 更新时间
+            completeUser.setUpdateTime(new Date());
+            
+            // 存储合并后的完整用户信息
+            String value = JSON.toJSONString(completeUser);
+            redisTemplateForObject.opsForValue().set(key, value, TOKEN_EXPIRE, TimeUnit.MILLISECONDS);
+        } else {
+            // 如果不存在现有数据，直接保存新数据
+            saveUserInfo(user);
+        }
     }
 
 }

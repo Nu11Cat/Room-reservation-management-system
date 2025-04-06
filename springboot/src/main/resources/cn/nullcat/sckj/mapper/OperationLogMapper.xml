@@ -10,6 +10,7 @@
         l.id,
         l.user_id AS userId,
         u.username AS userName,
+        u.real_name AS realName,
         l.module,
         l.operation,
         l.description,

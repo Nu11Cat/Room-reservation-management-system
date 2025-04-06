@@ -139,4 +139,26 @@ public class NotificationWebSocket {
             }
         }
     }
+
+    /**
+     * 广播任意消息给所有在线用户
+     * @param message JSON格式的消息
+     */
+    public static void broadcastMessage(String message) {
+        if (clients.isEmpty()) {
+            log.info("当前无在线用户，消息未广播");
+            return;
+        }
+        
+        int successCount = 0;
+        for (Map.Entry<Integer, NotificationWebSocket> entry : clients.entrySet()) {
+            try {
+                entry.getValue().session.getBasicRemote().sendText(message);
+                successCount++;
+            } catch (IOException e) {
+                log.error("向用户{}广播消息失败", entry.getKey(), e);
+            }
+        }
+        log.info("广播消息完成: 成功发送给{}个用户", successCount);
+    }
 }

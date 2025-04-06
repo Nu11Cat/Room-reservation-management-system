@@ -47,8 +47,8 @@ public interface UserMapper {
      * 更改个人信息
      * @param user
      */
-    @Update("update user set real_name = #{realName}, email = #{email}, phone = #{phone}, avatar = #{avatar}, update_time = NOW() where id = #{id}")
     void updateInfo(User user);
+
     /**
      * 修改密码
      * @param user
