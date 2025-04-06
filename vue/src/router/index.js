@@ -174,8 +174,29 @@ const router = createRouter({
   routes
 });
 
+// 获取系统名称函数
+function getSystemName() {
+  try {
+    const configCache = localStorage.getItem('system_config_cache');
+    if (configCache) {
+      const config = JSON.parse(configCache);
+      if (config.systemName) {
+        return config.systemName;
+      }
+    }
+  } catch (e) {
+    console.error('获取系统名称失败:', e);
+  }
+  return '会议室预约管理系统';
+}
+
 // 路由守卫
 router.beforeEach((to, from, next) => {
+  // 更新页面标题
+  const systemName = getSystemName();
+  const title = to.meta.title ? `${to.meta.title} - ${systemName}` : systemName;
+  document.title = title;
+  
   // 在进入登录页时清除本地存储，避免缓存问题
   if (to.path === '/login') {
     localStorage.removeItem('token');

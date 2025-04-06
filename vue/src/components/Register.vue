@@ -2,7 +2,7 @@
   <div class="register-container">
     <el-card class="register-box">
       <template #header>
-        <h2>注册</h2>
+        <h2>{{ systemName }} - 注册</h2>
       </template>
       <el-form :model="form" :rules="rules" ref="registerForm">
         <el-form-item prop="username">
@@ -40,12 +40,30 @@
 <script>
 import { User, Lock } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import { ref, onMounted } from 'vue'
+import { useConfigStore } from '@/stores/config'
 
 export default {
   name: 'UserRegister',
   components: {
     User,
     Lock
+  },
+  setup() {
+    const configStore = useConfigStore()
+    const systemName = ref('会议室预约管理系统')
+    
+    onMounted(async () => {
+      if (!configStore.initialized) {
+        await configStore.getConfig()
+      }
+      
+      if (configStore.config && configStore.config.systemName) {
+        systemName.value = configStore.config.systemName
+      }
+    })
+    
+    return { systemName }
   },
   data() {
     const validatePass2 = (rule, value, callback) => {

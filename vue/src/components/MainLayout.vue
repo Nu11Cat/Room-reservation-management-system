@@ -5,7 +5,7 @@
       <el-header height="60px" class="app-header">
         <div class="header-logo">
           <img src="@/assets/logo.png" alt="Logo" class="logo-img" v-if="false" />
-          <h2>会议室预订系统</h2>
+          <h2>{{ systemName }}</h2>
         </div>
         <div class="header-menu">
           <NotificationIcon />
@@ -179,6 +179,7 @@ import {
   InfoFilled
 } from '@element-plus/icons-vue';
 import { useUserStore } from '@/stores/user';
+import { useConfigStore } from '@/stores/config';
 import NotificationIcon from '@/components/NotificationIcon.vue';
 import { getUnreadCount } from '@/api/notification';
 
@@ -209,6 +210,7 @@ export default {
   setup() {
     const router = useRouter();
     const userStore = useUserStore();
+    const configStore = useConfigStore();
     const isCollapse = ref(false);
     
     const userInfo = computed(() => userStore.userInfo || {});
@@ -217,6 +219,16 @@ export default {
       const route = router.currentRoute.value;
       return route.path;
     });
+    
+    // 获取系统名称，如果未配置则使用默认值
+    const systemName = computed(() => {
+      return configStore.systemName || '会议室预约管理系统';
+    });
+    
+    // 确保配置已初始化
+    if (!configStore.initialized) {
+      configStore.initialize();
+    }
     
     // 切换折叠状态
     const toggleCollapse = () => {
@@ -273,7 +285,8 @@ export default {
       activeMenu,
       hasPermission,
       handleCommand,
-      toggleCollapse
+      toggleCollapse,
+      systemName
     };
   }
 };
