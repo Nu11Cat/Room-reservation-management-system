@@ -15,4 +15,24 @@
         </set>
         where id = #{id}
     </update>
+    <select id="getAllUsers" resultMap="userWithRoleMap">
+        SELECT
+            u.id, u.username, u.real_name, u.email, u.phone, u.role_id, u.status, u.create_time, u.update_time,
+            r.role_name as role_name
+        FROM user u
+                 LEFT JOIN role r ON u.role_id = r.id
+    </select>
+
+    <resultMap id="userWithRoleMap" type="cn.nullcat.sckj.pojo.User">
+        <id property="id" column="id"/>
+        <result property="username" column="username"/>
+        <result property="realName" column="real_name"/>
+        <result property="email" column="email"/>
+        <result property="phone" column="phone"/>
+        <result property="roleId" column="role_id"/>
+        <result property="status" column="status"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="roleName" column="role_name"/>
+    </resultMap>
 </mapper> 

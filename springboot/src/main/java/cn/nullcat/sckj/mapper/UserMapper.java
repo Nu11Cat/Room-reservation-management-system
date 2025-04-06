@@ -68,7 +68,6 @@ public interface UserMapper {
      * 获取全部用户信息
      * @return
      */
-    @Select("select id, username, real_name, email, phone,role_id, status, create_time, update_time from user")
     List<User> getAllUsers();
 
     /**
@@ -114,4 +113,13 @@ public interface UserMapper {
      */
     @Select("SELECT id, username FROM user WHERE status = 1")
     List<User> getUserSimpleList();
+
+    /**
+     * 更新用户角色
+     * @param userId 用户ID
+     * @param roleId 角色ID
+     * @return 影响的行数
+     */
+    @Update("UPDATE user SET role_id = #{roleId}, update_time = NOW() WHERE id = #{userId}")
+    int updateUserRole(Long userId, Long roleId);
 }

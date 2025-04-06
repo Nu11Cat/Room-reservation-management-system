@@ -29,4 +29,15 @@ public interface UserService {
     Integer getStatusById(Integer userId);
     
     List<User> getUserList();
+
+    PageBean getAllUsersWithRole(Integer page, Integer pageSize);
+
+    List<User> getUserSimpleList();
+    
+    /**
+     * 更新用户角色
+     * @param userId 用户ID
+     * @param roleId 角色ID
+     */
+    void updateUserRole(Integer userId, Long roleId);
 }

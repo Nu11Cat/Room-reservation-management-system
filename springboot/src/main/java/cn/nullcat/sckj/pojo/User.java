@@ -23,6 +23,7 @@ public class User {
     private Date updateTime;            // 更新时间
     private Boolean isDeleted;          // 是否删除
 
+    private String roleName;
 
     private String oldPassword;
 }

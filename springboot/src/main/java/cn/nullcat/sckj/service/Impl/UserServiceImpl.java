@@ -131,12 +131,61 @@ public class UserServiceImpl implements UserService {
     @Override
     @LogOperation(module = "用户管理", operation = "获取全部用户信息", description = "获取全部用户信息")
     public PageBean getAllUsers(Integer page, Integer pageSize) {
+        //设置分页参数
         PageHelper.startPage(page, pageSize);
-        List<User> list = userMapper.getAllUsers();
-        Page<User> p = (Page<User>) list;
-
+        //执行查询
+        List<User> userList = userMapper.getAllUsers();
+        //获取分页后数据
+        Page<User> p = (Page<User>) userList;
+        //封装pageBean
         PageBean pageBean = new PageBean(p.getTotal(), p.getResult());
         return pageBean;
+    }
+
+    /**
+     * 获取用户列表（包含角色信息）
+     * @param page 页码
+     * @param pageSize 每页大小
+     * @return 用户分页数据
+     */
+    @Override
+    public PageBean getAllUsersWithRole(Integer page, Integer pageSize) {
+        // 复用现有的getAllUsers方法，因为角色ID已包含在User对象中
+        return getAllUsers(page, pageSize);
+    }
+
+    /**
+     * 获取所有用户的简单列表
+     * @return 用户简单列表
+     */
+    @Override
+    public List<User> getUserSimpleList() {
+        return userMapper.getUserSimpleList();
+    }
+
+    /**
+     * 更新用户角色
+     * @param userId 用户ID
+     * @param roleId 角色ID
+     */
+    @Override
+    @LogOperation(module = "用户管理", operation = "更新用户角色", description = "更新用户角色")
+    public void updateUserRole(Integer userId, Long roleId) {
+        // 转换Integer类型的userId为Long类型
+        Long userIdLong = Long.valueOf(userId);
+        
+        // 更新用户角色
+        userMapper.updateUserRole(userIdLong, roleId);
+        
+        // 获取更新后的用户信息
+        User user = userMapper.getById(userId);
+        if (user != null) {
+            // 清除Redis缓存，确保用户下次访问时获取最新的权限
+            clearUserCache(userId);
+            // 更新Redis中的用户信息
+            user.setRoleId(roleId); // 确保Redis中的用户对象也更新了角色ID
+            tokenUtils.updateUserInfo(user);
+        }
     }
 
     /**
