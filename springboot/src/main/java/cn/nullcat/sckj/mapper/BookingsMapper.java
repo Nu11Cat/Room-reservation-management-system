@@ -33,8 +33,8 @@ public interface BookingsMapper {
      * @param booking
      */
     @Insert("insert into " +
-            "booking(room_id, user_id, title, start_time, end_time, attendees, description,status,create_time,update_time,is_deleted)" +
-            "values (#{roomId},#{userId},#{title},#{startTime},#{endTime},#{attendees},#{description},0,now(),now(),0)")
+            "booking(room_id, user_id, title, start_time, end_time, attendees, description, status, create_time, update_time, is_deleted)" +
+            "values (#{roomId}, #{userId}, #{title}, #{startTime}, #{endTime}, #{attendees}, #{description}, #{status}, now(), now(), 0)")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     void addBooking(Booking booking);
 

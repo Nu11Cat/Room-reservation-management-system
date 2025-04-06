@@ -17,4 +17,8 @@ public class OperationLog {
     private String description;         // 操作描述
     private String ip;                  // 操作IP
     private Date createTime;            // 创建时间
+    
+    // 以下字段不属于数据库表字段，用于接收联表查询结果
+    private String userName;            // 用户名
+    private String realName;            // 用户真实姓名
 }
