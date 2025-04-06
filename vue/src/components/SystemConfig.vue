@@ -12,6 +12,14 @@
         </div>
       </template>
       
+      <el-alert
+        title="系统配置影响全局功能，请谨慎修改以避免不必要的问题"
+        type="warning"
+        :closable="false"
+        show-icon
+        style="margin-bottom: 15px;"
+      />
+      
       <el-form :model="configForm" label-width="180px" class="config-form" v-loading="loading">
         <el-divider content-position="left">预约规则配置 (BOOKING_RULE)</el-divider>
         

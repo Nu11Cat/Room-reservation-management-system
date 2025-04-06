@@ -418,19 +418,27 @@ export default {
       try {
         loading.value = true;
         
+        // 获取周末的日期并添加一天，确保包含最后一天的数据
+        const lastDay = new Date(weekDays.value[6].date);
+        lastDay.setDate(lastDay.getDate() + 1);
+        const endDate = formatDate(lastDay);
+        
         const params = {
           page: 1,
           pageSize: 1000, // 获取足够多的数据
           begin: weekDays.value[0].date,
-          end: weekDays.value[6].date,
+          end: endDate, // 使用调整后的结束日期
           userId: userStore.userInfo.id // 只获取当前用户的预约
         };
         
+        console.log('预约日历查询参数:', params);
         const res = await getBookingList(params);
         
         if (res.code === 1 && res.data && Array.isArray(res.data.rows)) {
           bookings.value = res.data.rows;
+          console.log('日历视图加载预约数据成功:', bookings.value.length, '条记录');
         } else {
+          console.error('获取预约列表失败:', res);
           ElMessage.error(res.msg || '获取预约列表失败');
           bookings.value = [];
         }

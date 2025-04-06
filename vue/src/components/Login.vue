@@ -1,19 +1,35 @@
 <template>
-  <div class="login-container">
+  <div class="login-container" :style="backgroundStyle">
     <div class="login-box">
-      <h2>{{ systemName }}</h2>
+      <div class="login-header">
+        <h2>{{ systemName }}</h2>
+        <p>欢迎回来，请登录您的账号</p>
+      </div>
       <el-form :model="loginForm" :rules="loginRules" ref="loginFormRef">
         <el-form-item prop="username">
-          <el-input v-model="loginForm.username" placeholder="用户名" prefix-icon="User" />
+          <el-input 
+            v-model="loginForm.username" 
+            placeholder="请输入用户名" 
+            prefix-icon="User"
+            class="custom-input" 
+          />
         </el-form-item>
         <el-form-item prop="password">
-          <el-input v-model="loginForm.password" type="password" placeholder="密码" prefix-icon="Lock" show-password />
+          <el-input 
+            v-model="loginForm.password" 
+            type="password" 
+            placeholder="请输入密码" 
+            prefix-icon="Lock" 
+            show-password
+            class="custom-input"
+          />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" class="login-btn" @click="handleLogin" :loading="loading">登录</el-button>
+          <el-button type="primary" class="login-btn" @click="handleLogin" :loading="loading">登录系统</el-button>
         </el-form-item>
         <div class="register-link">
-          <router-link to="/register">没有账号？立即注册</router-link>
+          <span>还没有账号？</span>
+          <router-link to="/register">立即注册</router-link>
         </div>
       </el-form>
     </div>
@@ -21,7 +37,7 @@
 </template>
 
 <script>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import { useUserStore } from '@/stores/user';
@@ -37,8 +53,23 @@ export default {
     const loginFormRef = ref(null);
     const loading = ref(false);
 
-    // 获取系统名称
+    // 获取系统名称和背景图片
     const systemName = ref('会议室预约管理系统');
+    const loginBgImage = ref('');
+    
+    // 计算背景样式
+    const backgroundStyle = computed(() => {
+      if (loginBgImage.value) {
+        return {
+          backgroundImage: `url(${loginBgImage.value})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        };
+      }
+      return {
+        background: 'linear-gradient(120deg, #e0c3fc 0%, #8ec5fc 100%)'
+      };
+    });
     
     // 初始化时尝试获取配置
     onMounted(async () => {
@@ -48,11 +79,33 @@ export default {
           if (configStore.systemName) {
             systemName.value = configStore.systemName;
           }
+          // 尝试获取背景图片设置
+          if (configStore.loginBgImage) {
+            loginBgImage.value = configStore.loginBgImage;
+          } else {
+            // 尝试从localStorage获取用户自定义背景图片
+            const customBg = localStorage.getItem('loginBgImage');
+            if (customBg) {
+              loginBgImage.value = customBg;
+            }
+          }
         } catch (error) {
           console.error('获取系统配置失败:', error);
         }
-      } else if (configStore.systemName) {
-        systemName.value = configStore.systemName;
+      } else {
+        if (configStore.systemName) {
+          systemName.value = configStore.systemName;
+        }
+        // 尝试获取背景图片设置
+        if (configStore.loginBgImage) {
+          loginBgImage.value = configStore.loginBgImage;
+        } else {
+          // 尝试从localStorage获取用户自定义背景图片
+          const customBg = localStorage.getItem('loginBgImage');
+          if (customBg) {
+            loginBgImage.value = customBg;
+          }
+        }
       }
     });
 
@@ -84,13 +137,19 @@ export default {
             if (res && res.code === 1) {
               ElMessage.success('登录成功');
               
-              // 存储服务器返回的token
-              userStore.setToken(res.data);
+              // 从msg字段获取token而不是data字段
+              const token = res.msg;
+              console.log('从msg字段获取token:', token);
+              
+              // 直接存储到localStorage，避免通过store
+              localStorage.setItem('token', token);
+              console.log('Token已直接保存到localStorage:', token);
+              console.log('localStorage中保存的token:', localStorage.getItem('token'));
               
               // 获取JWT中的用户信息
               try {
                 // 解析JWT获取用户信息
-                const tokenParts = res.data.split('.');
+                const tokenParts = token.split('.');
                 if (tokenParts.length === 3) {
                   const payload = JSON.parse(atob(tokenParts[1]));
                   console.log('Token payload:', payload);
@@ -102,27 +161,25 @@ export default {
                     roleId: payload.roleId
                   };
                   
-                  // 保存用户信息
-                  userStore.setUserInfo(userInfo);
+                  // 直接保存用户信息到localStorage
+                  localStorage.setItem('userInfo', JSON.stringify(userInfo));
+                  console.log('userInfo已保存到localStorage:', userInfo);
+                  
+                  // 同步更新store
+                  userStore.token = token;
+                  userStore.userInfo = userInfo;
                   
                   // 登录成功，跳转到会议室预订页面
-                  router.push('/room/booking');
+                  setTimeout(() => {
+                    console.log('登录成功后localStorage token:', localStorage.getItem('token'));
+                    router.push('/room/booking');
+                  }, 500);
+                  
                   return;
                 }
               } catch (error) {
                 console.error('解析token失败:', error);
               }
-              
-              // 如果解析token失败，使用默认值
-              userStore.setUserInfo({
-                id: 1,
-                username: loginForm.username,
-                roleId: 2, // 默认为普通用户
-                roleName: '普通用户'
-              });
-              
-              // 登录成功，跳转到会议室预订页面
-              router.push('/room/booking');
             } else if (res) {
               // 处理错误情况，优先使用msg字段作为错误消息
               ElMessage.error(res.msg || res.message || '登录失败');
@@ -146,7 +203,8 @@ export default {
       loginFormRef,
       loading,
       handleLogin,
-      systemName
+      systemName,
+      backgroundStyle
     };
   }
 };
@@ -158,30 +216,116 @@ export default {
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background-color: #f5f7fa;
+  width: 100%;
+  background: linear-gradient(120deg, #e0c3fc 0%, #8ec5fc 100%);
+  position: relative;
+}
+
+.login-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.3);
+  z-index: 1;
+  pointer-events: none;
+  display: none;
+}
+
+.login-container[style*="background-image"]::before {
+  display: block;
 }
 
 .login-box {
   width: 400px;
   padding: 40px;
-  background-color: #fff;
+  background-color: rgba(255, 255, 255, 0.95);
   border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
+  position: relative;
+  z-index: 2;
+  backdrop-filter: blur(5px);
+  transition: all 0.3s ease;
+  animation: fadeIn 0.8s;
 }
 
-.login-box h2 {
-  text-align: center;
+.login-box:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.2);
+}
+
+.login-header {
   margin-bottom: 30px;
-  color: #409eff;
+  text-align: center;
+}
+
+.login-header h2 {
+  font-size: 24px;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.login-header p {
+  color: #888;
+  font-size: 14px;
+}
+
+.custom-input :deep(.el-input__wrapper) {
+  padding: 12px 15px;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s;
+}
+
+.custom-input :deep(.el-input__wrapper:hover) {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .login-btn {
   width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  border-radius: 4px;
+  margin-top: 10px;
+  transition: all 0.2s;
+}
+
+.login-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
 }
 
 .register-link {
-  text-align: right;
-  margin-top: 10px;
+  text-align: center;
+  margin-top: 20px;
   font-size: 14px;
+  color: #666;
+}
+
+.register-link a {
+  color: #409EFF;
+  font-weight: 500;
+  margin-left: 5px;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.register-link a:hover {
+  text-decoration: underline;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 响应式调整 */
+@media (max-width: 500px) {
+  .login-box {
+    width: 90%;
+    padding: 30px;
+  }
 }
 </style> 

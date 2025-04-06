@@ -14,9 +14,18 @@ const service = axios.create({
 // 请求拦截器
 service.interceptors.request.use(
   config => {
+    // 优先从localStorage直接读取token，确保最新值
     const token = localStorage.getItem('token');
+    console.log('请求拦截器中获取的token:', token);
+    
     if (token) {
+      // 确保headers对象存在
+      config.headers = config.headers || {};
+      // 设置token到请求头
       config.headers['token'] = token;
+      console.log(`已添加token到请求头，URL: ${config.url}`);
+    } else {
+      console.warn(`请求未携带token，URL: ${config.url}`);
     }
     return config;
   },
@@ -61,8 +70,21 @@ service.interceptors.response.use(
       // 根据不同状态码处理错误
       switch (error.response.status) {
         case 401:
-          ElMessage.error('请重新登录');
-          router.push('/login');
+          console.error('身份验证失败(401): 用户未登录或token已过期');
+          
+          // 清除本地无效token
+          localStorage.removeItem('token');
+          
+          // 获取并清空用户store
+          // eslint-disable-next-line no-case-declarations
+          const userStore = useUserStore();
+          userStore.clearUserInfo();
+          
+          // 只有非登录页面才显示提示和重定向
+          if (!window.location.pathname.includes('/login')) {
+            ElMessage.error('登录已过期，请重新登录');
+            router.push('/login');
+          }
           break;
         case 403:
           ElMessage.error('没有权限');

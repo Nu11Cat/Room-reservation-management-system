@@ -4,7 +4,14 @@ const webpack = require('webpack')
 module.exports = defineConfig({
   transpileDependencies: true,
   devServer: {
-    port: 8081
+    port: 8081,
+    client: {
+      overlay: {
+        errors: true,
+        warnings: false,
+        runtimeErrors: false,
+      },
+    },
   },
   configureWebpack: {
     resolve: {

@@ -197,8 +197,9 @@ router.beforeEach((to, from, next) => {
   const title = to.meta.title ? `${to.meta.title} - ${systemName}` : systemName;
   document.title = title;
   
-  // 在进入登录页时清除本地存储，避免缓存问题
-  if (to.path === '/login') {
+  // 修改token清除逻辑: 只在用户从已授权页面主动进入登录页时清除token
+  // 这避免了在登录过程中意外清除刚获取的token
+  if (to.path === '/login' && from.path !== '/' && from.matched.some(record => record.meta.requiresAuth)) {
     localStorage.removeItem('token');
     localStorage.removeItem('userInfo');
     localStorage.removeItem('userSettings');
