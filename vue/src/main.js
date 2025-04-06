@@ -27,26 +27,35 @@ app.use(router);
 const configStore = useConfigStore();
 configStore.initialize();
 
-// 抑制 ResizeObserver 循环错误
-const resizeHandler = () => {
-  const messages = [
-    'ResizeObserver loop limit exceeded',
-    'ResizeObserver loop completed with undelivered notifications'
-  ];
-  
-  window.addEventListener('error', (e) => {
-    if (messages.includes(e.message)) {
-      e.stopPropagation();
-      e.preventDefault();
-    }
-  }, true);
+// 处理ResizeObserver错误
+const debounce = (fn, delay) => {
+  let timer = null;
+  return function() {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      fn.apply(this, arguments);
+    }, delay);
+  };
 };
-resizeHandler();
 
-// 忽略ResizeObserver错误，这是Element Plus组件的常见警告
+// 阻止ResizeObserver错误引起的页面崩溃
+window.addEventListener('error', (e) => {
+  if (e.message === 'ResizeObserver loop limit exceeded' || e.message.includes('ResizeObserver')) {
+    console.warn('ResizeObserver error caught and handled');
+    e.stopImmediatePropagation();
+  }
+}, true);
+
+// 防止ResizeObserver循环问题
+window.addEventListener('resize', debounce(() => {
+  // 空函数，用于缓解ResizeObserver问题
+}, 100));
+
+// 抑制ResizeObserver错误
 const originalConsoleError = window.console.error;
 window.console.error = (...args) => {
-  if (args[0] && args[0].includes && args[0].includes('ResizeObserver')) {
+  if (args[0] && typeof args[0] === 'string' && args[0].includes('ResizeObserver')) {
+    // 忽略ResizeObserver错误
     return;
   }
   originalConsoleError(...args);

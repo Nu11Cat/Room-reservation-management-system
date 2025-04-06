@@ -13,6 +13,32 @@ import request from '@/utils/request';
  * @returns {Promise}
  */
 export function getBookingList(params) {
+  // 修复结束日期问题
+  if (params.end) {
+    // 克隆参数对象以避免修改原始对象
+    const newParams = {...params};
+    
+    // 解析结束日期并增加1天
+    if (params.end.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      const endDate = new Date(params.end);
+      endDate.setDate(endDate.getDate() + 1);
+      
+      // 格式化为YYYY-MM-DD
+      const year = endDate.getFullYear();
+      const month = String(endDate.getMonth() + 1).padStart(2, '0');
+      const day = String(endDate.getDate()).padStart(2, '0');
+      newParams.end = `${year}-${month}-${day}`;
+      
+      console.log('API层自动调整结束日期:', params.end, '->', newParams.end);
+      
+      return request({
+        url: '/bookings',
+        method: 'get',
+        params: newParams
+      });
+    }
+  }
+  
   return request({
     url: '/bookings',
     method: 'get',
