@@ -1,8 +1,10 @@
 package cn.nullcat.sckj.controller;
 
+import cn.nullcat.sckj.annotation.LogOperation;
 import cn.nullcat.sckj.annotation.RequirePermission;
 import cn.nullcat.sckj.pojo.PageBean;
 import cn.nullcat.sckj.pojo.Result;
+import cn.nullcat.sckj.pojo.Role;
 import cn.nullcat.sckj.pojo.User;
 import cn.nullcat.sckj.service.UserService;
 import cn.nullcat.sckj.utils.JwtUtils;
@@ -200,5 +202,22 @@ public class UserController {
     public Result getUserList() {
         List<User> userList = userservice.getUserList();
         return Result.success(userList);
+    }
+
+    /**
+     * 修改用户角色
+     * @param userId 用户ID
+     * @param roleIdMap 角色ID Map
+     * @return 操作结果
+     */
+    @PutMapping("/{userId}/role")
+    @RequirePermission("system:user:edit")
+    public Result updateUserRole(@PathVariable Integer userId, @RequestBody Map<String, Long> roleIdMap) {
+        Long roleId = roleIdMap.get("roleId");
+        if (roleId == null) {
+            return Result.error("角色ID不能为空");
+        }
+        userservice.updateUserRole(userId, roleId);
+        return Result.success("用户角色修改成功");
     }
 }
