@@ -404,3 +404,105 @@ INSERT INTO role_permission (role_id, permission_id, create_time, update_time, i
 -- 权限管理权限
 (1, 36, NOW(), NOW(), 0),
 (1, 37, NOW(), NOW(), 0);
+
+
+
+
+
+
+
+
+
+
+-- 1.0+版本，新增用户类型字段
+-- 在用户表中添加字段
+ALTER TABLE user ADD COLUMN identity VARCHAR(20) DEFAULT "学生" COMMENT '用户身份类型：admin-管理员，teacher-老师，student-学生';
+-- 在用户表中添加信誉积分字段
+ALTER TABLE user ADD COLUMN credit_score INT DEFAULT 100 
+  CHECK (credit_score >= 0 AND credit_score <= 100) 
+  COMMENT '用户信誉值，范围0-100，默认初始值100';
+--1. 用户评价表设计
+CREATE TABLE user_review (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    room_id BIGINT NOT NULL COMMENT '会议室ID',
+    booking_id BIGINT NOT NULL COMMENT '预约记录ID',
+    reviewer_id BIGINT NOT NULL COMMENT '评价人ID',
+    reviewed_user_id BIGINT NOT NULL COMMENT '被评价用户ID',
+    review_score INT NOT NULL CHECK (review_score BETWEEN 1 AND 5) COMMENT '评分(1-5分)',
+    review_type INT NOT NULL COMMENT '评价类型：1-清洁度,2-守时,3-设备使用,4-噪音,5-其他',
+    review_content VARCHAR(500) COMMENT '评价内容',
+    evidence_urls JSON COMMENT '证据图片URL',
+    is_processed TINYINT(1) DEFAULT 0 COMMENT '是否已处理',
+    credit_impact INT DEFAULT 0 COMMENT '对信誉分的影响值',
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    INDEX idx_booking (booking_id),
+    INDEX idx_room (room_id),
+    INDEX idx_reviewer (reviewer_id),
+    INDEX idx_reviewed (reviewed_user_id)
+) COMMENT='用户会议室使用评价表';
+--2. 不文明行为类型表
+CREATE TABLE misconduct_type (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    type_name VARCHAR(50) NOT NULL COMMENT '不文明行为类型名称',
+    description VARCHAR(200) COMMENT '行为描述',
+    default_score_impact INT NOT NULL COMMENT '默认信誉分影响值',
+    severity_level INT NOT NULL COMMENT '严重程度(1-5)',
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) COMMENT='不文明行为类型表';
+
+-- 插入一些预设的不文明行为类型
+INSERT INTO misconduct_type (type_name, description, default_score_impact, severity_level) VALUES
+('会议室卫生不打扫', '离开后未清理会议室垃圾、白板等', -5, 2),
+('超时使用', '超出预约时间仍占用会议室', -10, 3),
+('损坏设备', '使用过程中损坏会议室设备', -15, 4),
+('噪音干扰', '会议过程中噪音过大影响他人', -5, 2),
+('未按时到场', '预约后未按时到场使用', -10, 3),
+('私自取消预约', '临时取消预约但未通知系统', -8, 3),
+('违规使用设备', '不按规定使用会议室设备', -5, 2),
+('人数超额', '实际使用人数超过申报人数', -3, 1);
+--3. 评价处理记录表
+CREATE TABLE review_processing (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    review_id BIGINT NOT NULL COMMENT '评价ID',
+    processor_id BIGINT NOT NULL COMMENT '处理人ID',
+    processing_result TINYINT NOT NULL COMMENT '处理结果：1-有效,2-无效,3-需调查',
+    final_credit_impact INT COMMENT '最终信誉分变动',
+    processing_comment VARCHAR(500) COMMENT '处理意见',
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    
+    INDEX idx_review (review_id),
+    INDEX idx_processor (processor_id)
+) COMMENT='评价处理记录表';
+--4. 信誉积分变动记录表
+CREATE TABLE credit_score_log (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL COMMENT '用户ID',
+    score_change INT NOT NULL COMMENT '分数变动值',
+    previous_score INT NOT NULL COMMENT '变动前分数',
+    current_score INT NOT NULL COMMENT '当前分数',
+    change_reason VARCHAR(100) NOT NULL COMMENT '变动原因',
+    related_id BIGINT COMMENT '关联ID(评价ID或其他)',
+    operator_id BIGINT COMMENT '操作人ID',
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    
+    INDEX idx_user (user_id),
+    INDEX idx_time (create_time)
+) COMMENT='信誉积分变动记录表';
+-- 特殊时间段预约调整表
+CREATE TABLE special_time_period (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,             -- 唯一ID
+    week_start_date DATE NOT NULL,                    -- 本周的开始日期（即本周的周一）
+    teacher_reserved_count INT NOT NULL DEFAULT 0,    -- 本周教师预约的会议室数量
+    teacher_available_count INT NOT NULL,             -- 本周教师可以预约的会议室数量
+    teacher_min_reserve_count INT NOT NULL DEFAULT 5, -- 最少预留给教师的会议室数量（可以设定默认值）
+    student_available_count INT NOT NULL,             -- 本周学生可以预约的会议室数量
+    total_rooms_count INT NOT NULL,                   -- 总会议室数
+    adjustment_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,  -- 数据调整时间
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,     -- 创建时间
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, -- 更新时间
+    INDEX idx_week_start (week_start_date),           -- 按照周的开始日期索引
+    INDEX idx_adjustment_date (adjustment_date)      -- 按照调整时间索引
+) COMMENT='特殊时间段预约调整表';
