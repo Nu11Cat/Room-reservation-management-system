@@ -25,7 +25,17 @@ public class LoginCheckInterceptor implements HandlerInterceptor{
     public boolean preHandle(HttpServletRequest req, HttpServletResponse rep, Object handler) throws Exception {
         // 1. 获取请求URL
         String url = req.getRequestURI().toString();
-        // 2. 如果是登录接口，直接放行
+        // 2. Swagger UI 相关路径放行
+        if (url.contains("/swagger-ui") ||
+                url.contains("/swagger-resources") ||
+                url.contains("/v3/api-docs") ||
+                url.contains("/v2/api-docs") ||
+                url.contains("/webjars/")) {
+            System.out.println("***************************Swagger request, bypassing login check");
+            return true;
+        }
+
+        // 3. 如果是登录接口，直接放行
         if (url.contains("login")) {
             return true;
         }

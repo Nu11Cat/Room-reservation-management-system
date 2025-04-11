@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
+
 @RequestMapping("/approvals")
 @RequirePermission("booking:approve")
 public class ApprovalsController {
@@ -25,6 +26,7 @@ public class ApprovalsController {
      * @return
      */
     @GetMapping("/pending")
+
     public Result getPendingApprovals(@RequestParam(defaultValue = "1") Integer page,
                                       @RequestParam(defaultValue = "10") Integer pageSize) {
         PageBean pageBean = approvalsService.getPendingApprovals(page,pageSize);

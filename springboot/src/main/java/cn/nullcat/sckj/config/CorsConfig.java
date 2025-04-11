@@ -15,7 +15,9 @@ public class CorsConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         // 配置跨域的 URL 映射
         registry.addMapping("/**")  // 允许所有路径
-                .allowedOrigins("http://localhost:8081")  // 只允许前端地址为 http://localhost:3000 的请求
+                .allowedOrigins("http://localhost:8081",
+                        "http://localhost:5173",
+                        "http://localhost:8080")
                 .allowedMethods("GET", "POST", "PUT", "DELETE")  // 允许的 HTTP 方法
                 .allowedHeaders("Origin", "Content-Type", "Accept", "Authorization", "token")
                 .allowCredentials(true)  // 是否允许发送凭证（例如 Cookies 或 Authorization 认证信息）

@@ -9,6 +9,8 @@ import cn.nullcat.sckj.pojo.User;
 import cn.nullcat.sckj.service.UserService;
 import cn.nullcat.sckj.utils.JwtUtils;
 import cn.nullcat.sckj.utils.TokenUtils;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +23,7 @@ import java.util.Map;
 @Slf4j
 @RestController
 @RequestMapping("/user")
+@Tag(name = "用户controller")
 public class UserController {
     @Autowired
     private UserService userservice;
@@ -31,6 +34,7 @@ public class UserController {
      * @param user
      * @return
      */
+    @Operation(summary ="用户登录")
     @PostMapping("/login")
     public Result login(@RequestBody User user) {
         if(user.getUsername()==null || user.getPassword()==null) {
