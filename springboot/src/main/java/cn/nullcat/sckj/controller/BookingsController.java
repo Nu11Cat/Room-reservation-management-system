@@ -5,6 +5,8 @@ import cn.nullcat.sckj.pojo.Booking;
 import cn.nullcat.sckj.pojo.PageBean;
 import cn.nullcat.sckj.pojo.Result;
 import cn.nullcat.sckj.service.BookingsService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +17,7 @@ import java.time.LocalDate;
 
 @Slf4j
 @RestController
+@Tag(name = "预约管理")
 @RequestMapping("/bookings")
 public class BookingsController {
     @Autowired
@@ -33,6 +36,7 @@ public class BookingsController {
      */
     @GetMapping
     @RequirePermission("booking:list")
+    @Operation(summary ="获取预约列表")
     public Result getBookings(@RequestParam(defaultValue = "1") Integer page,
                               @RequestParam(defaultValue = "10") Integer pageSize,
                               Integer roomId,
@@ -52,6 +56,7 @@ public class BookingsController {
      */
     @GetMapping("/{id}")
     @RequirePermission("booking:view")
+    @Operation(summary ="根据id获取预约详情")
     public Result getBookings(@PathVariable Integer id) {
         Booking booking = bookingsService.getById(id);
         return Result.success(booking);
@@ -64,6 +69,7 @@ public class BookingsController {
      */
     @PostMapping
     @RequirePermission("booking:add")
+    @Operation(summary ="新增预约")
     public Result addBooking(@RequestBody Booking booking, HttpServletRequest request) {
         Integer userIdNow = (Integer) request.getAttribute("userId");
         booking.setUserId(Long.valueOf(userIdNow));
@@ -79,6 +85,7 @@ public class BookingsController {
      */
     @PutMapping("/{id}")
     @RequirePermission("booking:edit")
+    @Operation(summary ="修改预约")
     public Result updateBooking(@PathVariable Long id,@RequestBody Booking booking, HttpServletRequest request) {
         Integer userIdNow = (Integer) request.getAttribute("userId");
         booking.setUserId(Long.valueOf(userIdNow));
@@ -94,6 +101,7 @@ public class BookingsController {
      */
     @PutMapping("/{id}/cancel")
     @RequirePermission("booking:cancel")
+    @Operation(summary ="取消预约")
     public Result cancelBooking(@PathVariable Integer id) {
         bookingsService.cancelBooking(id);
         return Result.success("取消成功");

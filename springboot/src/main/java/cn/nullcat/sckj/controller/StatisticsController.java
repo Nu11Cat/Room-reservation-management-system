@@ -4,6 +4,8 @@ import cn.nullcat.sckj.annotation.RequirePermission;
 import cn.nullcat.sckj.pojo.DTO.*;
 import cn.nullcat.sckj.pojo.Result;
 import cn.nullcat.sckj.service.StatisticsService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,13 +18,22 @@ import java.util.Date;
 import java.util.List;
 
 @RestController
+@Tag(name = "数据统计")
 @RequestMapping("/statistics")
 public class StatisticsController {
     @Autowired
     private StatisticsService statisticsService;
 
+    /**
+     *
+     * @param startDate
+     * @param endDate
+     * @return
+     */
     @GetMapping("/room-usage")
     @RequirePermission("report:view")
+    @Operation(summary ="获取会议室使用率")
+
     public Result getRoomUsageStatistics(
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate) {
@@ -41,6 +52,7 @@ public class StatisticsController {
 
     @GetMapping("/booking-status")
     @RequirePermission("report:view")
+    @Operation(summary ="获取会议室状态统计")
     public Result getBookingStatusStatistics(
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate) {
@@ -59,6 +71,8 @@ public class StatisticsController {
 
     @GetMapping("/user-ranking")
     @RequirePermission("report:view")
+    @Operation(summary ="获取用户预约排名")
+
     public Result getUserBookingRanking(
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate,
@@ -78,6 +92,7 @@ public class StatisticsController {
 
     @GetMapping("/meeting-duration")
     @RequirePermission("report:view")
+    @Operation(summary ="获取会议持续时间统计信息")
     public Result getMeetingDurationStatistics(
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate) {
@@ -95,6 +110,7 @@ public class StatisticsController {
     }
 
     @GetMapping("/all")
+    @Operation(summary ="获取全部数据")
     @RequirePermission("report:view")
     public Result getAllStatistics(
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,

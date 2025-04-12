@@ -6,6 +6,8 @@ import cn.nullcat.sckj.pojo.Permission;
 import cn.nullcat.sckj.pojo.Role;
 import cn.nullcat.sckj.pojo.Result;
 import cn.nullcat.sckj.service.RoleService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +17,7 @@ import java.util.Map;
 
 @Slf4j
 @RestController
+@Tag(name = "角色管理")
 @RequestMapping("/roles")
 public class RoleController {
     @Autowired
@@ -28,6 +31,8 @@ public class RoleController {
      * @return 角色列表
      */
     @GetMapping
+    @Operation(summary ="获取所有角色")
+
     @RequirePermission("system:role:view")
     public Result getAllRoles() {
         List<Role> roles = roleService.getAllRoles();
@@ -41,6 +46,7 @@ public class RoleController {
      */
     @GetMapping("/{id}")
     @RequirePermission("system:role:view")
+    @Operation(summary ="获取角色详情")
     public Result getRoleById(@PathVariable Long id) {
         Role role = roleService.getById(id);
         if (role == null) {
@@ -55,6 +61,7 @@ public class RoleController {
      * @return 权限列表
      */
     @GetMapping("/{id}/permissions")
+    @Operation(summary ="获取角色权限")
     @RequirePermission("system:role:view")
     public Result getRolePermissions(@PathVariable Long id) {
         List<String> permissions = roleService.getRolePermissions(id);
@@ -67,6 +74,7 @@ public class RoleController {
      * @return 权限ID列表
      */
     @GetMapping("/{id}/permissionIds")
+    @Operation(summary ="获取角色权限ID列表")
     @RequirePermission("system:role:view")
     public Result getRolePermissionIds(@PathVariable Long id) {
         List<Long> permissionIds = roleService.getRolePermissionIds(id);
@@ -79,6 +87,7 @@ public class RoleController {
      * @return 操作结果
      */
     @PostMapping
+    @Operation(summary ="创建角色")
     @RequirePermission("system:role:add")
     public Result addRole(@RequestBody Role role) {
         try {
@@ -97,6 +106,7 @@ public class RoleController {
      * @return 操作结果
      */
     @PutMapping("/{id}")
+    @Operation(summary ="更新角色")
     @RequirePermission("system:role:edit")
     public Result updateRole(@PathVariable Long id, @RequestBody Role role) {
         role.setId(id); // 确保ID一致
@@ -119,6 +129,7 @@ public class RoleController {
      * @return 操作结果
      */
     @DeleteMapping("/{id}")
+    @Operation(summary ="删除角色")
     @RequirePermission("system:role:delete")
     public Result deleteRole(@PathVariable Long id) {
         try {
@@ -141,6 +152,7 @@ public class RoleController {
      * @return 操作结果
      */
     @PutMapping("/{id}/permissions")
+    @Operation(summary ="设置角色权限")
     @RequirePermission("system:role:edit")
     public Result setRolePermissions(@PathVariable Long id, @RequestBody Map<String, List<String>> permissionCodesMap) {
         List<String> permissionCodes = permissionCodesMap.get("permissionCodes");
@@ -169,6 +181,7 @@ public class RoleController {
      */
     @PostMapping("/{roleId}/permissions")
     @RequirePermission("system:role:edit")
+    @Operation(summary ="为角色添加权限")
     public Result addRolePermission(@PathVariable Long roleId, @RequestBody Map<String, String> permissionMap) {
         String permissionCode = permissionMap.get("permissionCode");
         if (permissionCode == null) {
@@ -201,6 +214,7 @@ public class RoleController {
      * @return 操作结果
      */
     @DeleteMapping("/{roleId}/permissions/code/{permissionCode}")
+    @Operation(summary ="移除角色权限")
     @RequirePermission("system:role:edit")
     public Result removeRolePermissionByCode(@PathVariable Long roleId, @PathVariable String permissionCode) {
         try {
@@ -229,6 +243,7 @@ public class RoleController {
      * @return 操作结果
      */
     @DeleteMapping("/{roleId}/permissions/{permissionId}")
+    @Operation(summary ="通过ID移除角色权限")
     @RequirePermission("system:role:edit")
     public Result removeRolePermission(@PathVariable Long roleId, @PathVariable Long permissionId) {
         try {
@@ -251,6 +266,7 @@ public class RoleController {
      * @return 操作结果
      */
     @PutMapping("/user/{userId}/role")
+    @Operation(summary ="更新用户角色")
     @RequirePermission("system:user:edit")
     public Result updateUserRole(@PathVariable Long userId, @RequestBody Role role) {
         boolean success = roleService.updateUserRole(userId, role.getId());
@@ -266,6 +282,7 @@ public class RoleController {
      * @return 权限编码列表
      */
     @GetMapping("/permissions/codes")
+    @Operation(summary ="获取所有权限编码")
     @RequirePermission("system:role:view")
     public Result getAllPermissionCodes() {
         try {

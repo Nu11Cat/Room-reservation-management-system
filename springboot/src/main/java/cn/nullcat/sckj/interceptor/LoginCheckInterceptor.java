@@ -31,10 +31,11 @@ public class LoginCheckInterceptor implements HandlerInterceptor{
                 url.contains("/v3/api-docs") ||
                 url.contains("/v2/api-docs") ||
                 url.contains("/webjars/")) {
-            System.out.println("***************************Swagger request, bypassing login check");
             return true;
         }
-
+        if (url.contains("doc.html") ) {
+            return true;
+        }
         // 3. 如果是登录接口，直接放行
         if (url.contains("login")) {
             return true;

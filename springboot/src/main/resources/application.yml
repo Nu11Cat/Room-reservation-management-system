@@ -41,9 +41,6 @@ springdoc:
     - group: 'default'             #分组名称
       paths-to-match: '/**'        #配置需要匹配的路径
       packages-to-scan: cn.nullcat.sckj    #配置要扫描包的路径,一般配置到启动类所在的包名
-    - group: 'admin-api'
-      paths-to-match: '/**'
-      packages-to-scan: cn.nullcat.sckj
 # knife4j的增强配置，不需要增强可以不配
 knife4j:
   enable: true    #开启knife4j,无需添加@EnableKnife4j注解
