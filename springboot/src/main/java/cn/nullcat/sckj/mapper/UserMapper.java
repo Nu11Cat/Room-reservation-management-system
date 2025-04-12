@@ -15,8 +15,8 @@ public interface UserMapper {
      * 注册
      * @param user
      */
-    @Insert("insert into user(username, password, real_name, email, phone, avatar, role_id, status, create_time, update_time, is_deleted) " +
-            "VALUES(#{username},#{password},#{realName},#{email},#{phone},#{avatar},#{roleId},#{status},#{createTime},#{updateTime},#{isDeleted}) ")
+    @Insert("insert into user(username, password, real_name, email, phone, avatar, role_id, status, create_time, update_time, is_deleted, credit_score, identity) " +
+            "VALUES(#{username},#{password},#{realName},#{email},#{phone},#{avatar},#{roleId},#{status},#{createTime},#{updateTime},#{isDeleted},#{creditScore},#{identity}) ")
     void register(User user);
 
     /**
@@ -108,10 +108,10 @@ public interface UserMapper {
     List<Long> getUserIdsByRoleId(Long roleId);
 
     /**
-     * 获取所有用户的简单列表（ID和用户名）
+     * 获取所有用户的简单列表（ID、用户名和身份）
      * @return 用户列表
      */
-    @Select("SELECT id, username FROM user WHERE status = 1")
+    @Select("SELECT id, username, identity, credit_score as creditScore FROM user WHERE status = 1")
     List<User> getUserSimpleList();
 
     /**

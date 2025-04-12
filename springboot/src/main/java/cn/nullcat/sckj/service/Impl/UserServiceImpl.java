@@ -99,6 +99,9 @@ public class UserServiceImpl implements UserService {
         user.setStatus(1);
         user.setRoleId(2L);
         user.setIsDeleted(false);
+        // 设置默认信誉分数和身份
+        user.setCreditScore(100);  // 默认信誉分为100
+        user.setIdentity("student");  // 默认身份为学生
         userMapper.register(user);
     }
 
@@ -200,6 +203,13 @@ public class UserServiceImpl implements UserService {
         user.setStatus(1);
         user.setIsDeleted(false);
         user.setRoleId(2L);
+        // 如果未设置信誉分和身份，则设置默认值
+        if (user.getCreditScore() == null) {
+            user.setCreditScore(100);  // 默认信誉分为100
+        }
+        if (user.getIdentity() == null) {
+            user.setIdentity("student");  // 默认身份为学生
+        }
         userMapper.register(user);
     }
 

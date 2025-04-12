@@ -11,6 +11,8 @@
             <if test="email != null">email = #{email},</if>
             <if test="phone != null">phone = #{phone},</if>
             <if test="avatar != null">avatar = #{avatar},</if>
+            <if test="creditScore != null">credit_score = #{creditScore},</if>
+            <if test="identity != null">identity = #{identity},</if>
             update_time = NOW()
         </set>
         where id = #{id}
@@ -18,6 +20,7 @@
     <select id="getAllUsers" resultMap="userWithRoleMap">
         SELECT
             u.id, u.username, u.real_name, u.email, u.phone, u.role_id, u.status, u.create_time, u.update_time,
+            u.credit_score, u.identity,
             r.role_name as role_name
         FROM user u
                  LEFT JOIN role r ON u.role_id = r.id
@@ -34,5 +37,7 @@
         <result property="createTime" column="create_time"/>
         <result property="updateTime" column="update_time"/>
         <result property="roleName" column="role_name"/>
+        <result property="creditScore" column="credit_score"/>
+        <result property="identity" column="identity"/>
     </resultMap>
 </mapper> 

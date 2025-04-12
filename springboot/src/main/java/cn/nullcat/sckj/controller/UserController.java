@@ -23,7 +23,7 @@ import java.util.Map;
 @Slf4j
 @RestController
 @RequestMapping("/user")
-@Tag(name = "用户controller")
+@Tag(name = "用户相关")
 public class UserController {
     @Autowired
     private UserService userservice;
@@ -73,6 +73,7 @@ public class UserController {
      * @param user
      * @return
      */
+    @Operation(summary ="用户注册")
     @PostMapping("/register")
     public Result register(@RequestBody User user) {
         if(user.getUsername()==null || user.getPassword()==null) {
@@ -88,6 +89,7 @@ public class UserController {
      * 退出登录
      * @return
      */
+    @Operation(summary ="退出登录")
     @PostMapping("/logout")
     public Result logOut(HttpServletRequest request) {
         Integer userId = (Integer) request.getAttribute("userId");
@@ -101,6 +103,7 @@ public class UserController {
      * @param request
      * @return
      */
+    @Operation(summary ="获取当前登录用户信息")
     @GetMapping("/info")
     public Result info(HttpServletRequest request) {
         Integer userIdNow = (Integer) request.getAttribute("userId");
@@ -114,6 +117,7 @@ public class UserController {
      * @return
      */
     @PutMapping("/info")
+    @Operation(summary ="修改用户信息")
     public Result update(@RequestBody User user,HttpServletRequest request) {
         Integer userIdNow = (Integer) request.getAttribute("userId");
         user.setId(Long.valueOf(userIdNow));
@@ -127,6 +131,7 @@ public class UserController {
      * @return
      */
     @PutMapping("/password")
+    @Operation(summary ="修改密码")
     public Result updatePassword(@RequestBody User user,HttpServletRequest request) {
         Integer userIdNow = (Integer) request.getAttribute("userId");
         if(!userservice.getById(userIdNow).getPassword().equals(user.getOldPassword())) {
@@ -143,6 +148,7 @@ public class UserController {
      */
     @GetMapping("/users")
     @RequirePermission("system:user")
+    @Operation(summary ="获取全部用户信息")
     public Result getAllUsers(@RequestParam(defaultValue = "1") Integer page,
                               @RequestParam(defaultValue = "10") Integer pageSize) {
         PageBean pageBean = userservice.getAllUsers(page,pageSize);
@@ -156,6 +162,7 @@ public class UserController {
      */
     @GetMapping("/getById")
     @RequirePermission("system:user:view")
+    @Operation(summary ="查看指定用户")
     public Result getById(@RequestParam Integer id) {
         User user = userservice.getById(id);
         return Result.success(user);
@@ -167,6 +174,7 @@ public class UserController {
      * @return
      */
     @PostMapping("/add")
+    @Operation(summary ="添加用户")
     @RequirePermission("system:user:add")
     public Result add(@RequestBody User user) {
         userservice.add(user);
@@ -179,6 +187,7 @@ public class UserController {
      * @return
      */
     @PutMapping("/editById")
+    @Operation(summary ="编辑指定用户")
     @RequirePermission("system:user:edit")
     public Result editByUser(@RequestBody User user) {
         userservice.update(user);
@@ -191,6 +200,7 @@ public class UserController {
      * @return
      */
     @DeleteMapping("/ban/{id}")
+    @Operation(summary ="封禁/解封用户")
     @RequirePermission("system:user:delete")
     public Result banById(@PathVariable Integer id) {
         userservice.banOrUnseal(id);
@@ -202,6 +212,7 @@ public class UserController {
      * @return
      */
     @GetMapping("/list")
+    @Operation(summary ="获取所有用户的简单列表（ID和用户名）")
     @RequirePermission("notification:send")
     public Result getUserList() {
         List<User> userList = userservice.getUserList();
@@ -215,6 +226,7 @@ public class UserController {
      * @return 操作结果
      */
     @PutMapping("/{userId}/role")
+    @Operation(summary ="修改用户角色")
     @RequirePermission("system:user:edit")
     public Result updateUserRole(@PathVariable Integer userId, @RequestBody Map<String, Long> roleIdMap) {
         Long roleId = roleIdMap.get("roleId");

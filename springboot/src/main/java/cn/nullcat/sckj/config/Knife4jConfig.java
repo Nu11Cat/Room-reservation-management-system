@@ -43,7 +43,7 @@ public class Knife4jConfig {
                         // 版本
                         .version("v1.0.0")
                         // 设置OpenAPI文档的联系信息，姓名，邮箱。
-                        .contact(new Contact().name("Hva").email("Hva@163.com"))
+                        .contact(new Contact().name("nullcat").email("2111867383@qq.com"))
                         // 设置OpenAPI文档的许可证信息，包括许可证名称为"Apache 2.0"，许可证URL为"http://springdoc.org"。
                         .license(new License().name("Apache 2.0").url("http://springdoc.org"))
                 );

@@ -1,5 +1,6 @@
 package cn.nullcat.sckj.pojo;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,6 +10,7 @@ import java.util.Date;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Schema(description = "房间/会议室")
 public class Room {
     private Long id;                    // 主键ID
     private String name;                // 会议室名称
