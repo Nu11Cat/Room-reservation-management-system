@@ -104,12 +104,16 @@ export function addBooking(data) {
   }).catch(error => {
     // 捕获500错误，将其转换为业务响应
     console.error('添加预订失败:', error);
-    
+
     // 如果是服务器返回的错误，保留原始消息
     if (error.response && error.response.data) {
-      return error.response.data;
+      return {
+        code: 0,
+        msg: error.response.data.message || '该时间段已被预约，请选择其他时间段',
+        success: false
+      };
     }
-    
+
     // 创建一个用户友好的错误响应
     return {
       code: 0,
@@ -224,4 +228,4 @@ export function approveBooking(data) {
       comment: data.comment
     }
   });
-} 
+}

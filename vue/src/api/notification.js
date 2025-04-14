@@ -53,6 +53,7 @@ export function getUnreadCount() {
  * @returns {Promise}
  */
 export function sendNotification(data) {
+  console.log('sendNotification 方法被调用，发送数据:', data);
   return request({
     url: '/notification/send',
     method: 'post',
@@ -83,4 +84,4 @@ export function batchMarkRead(ids) {
     method: 'put',
     data: { ids }
   });
-} 
+}
