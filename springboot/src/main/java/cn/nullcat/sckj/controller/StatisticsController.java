@@ -52,7 +52,7 @@ public class StatisticsController {
 
     @GetMapping("/booking-status")
     @RequirePermission("report:view")
-    @Operation(summary ="获取会议室状态统计")
+    @Operation(summary ="获取预约状态统计")
     public Result getBookingStatusStatistics(
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate) {

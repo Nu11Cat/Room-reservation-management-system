@@ -122,4 +122,11 @@ public interface UserMapper {
      */
     @Update("UPDATE user SET role_id = #{roleId}, update_time = NOW() WHERE id = #{userId}")
     int updateUserRole(Long userId, Long roleId);
+
+    /**
+     * 根据用户ID查询用户角色ID
+     * @param userId 用户ID
+     * @return 角色ID
+     */
+    Integer selectRoleIdByUserId(Long userId);
 }
