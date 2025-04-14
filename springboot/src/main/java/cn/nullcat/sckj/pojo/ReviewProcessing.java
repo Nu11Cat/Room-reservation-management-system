@@ -5,29 +5,69 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
+
+/**
+ * 评价处理记录实体类
+ */
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
+@Schema(description = "评价处理记录")
 public class ReviewProcessing {
-
-    @Schema(description = "评价处理记录ID", example = "1")
+    
+    /**
+     * 主键ID
+     */
+    @Schema(description = "处理记录ID")
     private Long id;
-
-    @Schema(description = "评价ID", example = "12345")
+    
+    /**
+     * 评价ID
+     */
+    @Schema(description = "评价ID")
     private Long reviewId;
-
-    @Schema(description = "处理人ID", example = "67890")
+    
+    /**
+     * 处理人ID
+     */
+    @Schema(description = "处理人ID")
     private Long processorId;
-
-    @Schema(description = "处理结果：1-有效, 2-无效, 3-需调查", example = "1")
+    
+    /**
+     * 处理结果：1-有效,2-无效,3-需调查
+     */
+    @Schema(description = "处理结果：1-有效,2-无效,3-需调查")
     private Integer processingResult;
-
-    @Schema(description = "最终信誉分变动", example = "10")
+    
+    /**
+     * 最终信誉分变动
+     */
+    @Schema(description = "最终信誉分变动")
     private Integer finalCreditImpact;
-
-    @Schema(description = "处理意见", example = "已核实，处理有效")
+    
+    /**
+     * 处理意见
+     */
+    @Schema(description = "处理意见")
     private String processingComment;
-
-    @Schema(description = "创建时间", example = "2023-04-01T10:00:00")
-    private String createTime;
+    
+    /**
+     * 创建时间
+     */
+    @Schema(description = "创建时间")
+    private Date createTime;
+    
+    // 非数据库字段
+    /**
+     * 处理人姓名
+     */
+    @Schema(description = "处理人姓名")
+    private String processorName;
+    
+    /**
+     * 关联的评价信息
+     */
+    @Schema(description = "关联的评价信息")
+    private UserReview userReview;
 }

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.nullcat.sckj.mapper.CreditScoreMapper">
+    
+    <!-- 插入信誉分变动记录 -->
+    <insert id="insertScoreLog" parameterType="cn.nullcat.sckj.pojo.CreditScoreLog">
+        INSERT INTO credit_score_log (
+            user_id, score_change, previous_score, current_score,
+            change_reason, related_id, operator_id, create_time
+        ) VALUES (
+            #{userId}, #{scoreChange}, #{previousScore}, #{currentScore},
+            #{changeReason}, #{relatedId}, #{operatorId}, #{createTime}
+        )
+    </insert>
+
+    <!-- 查询用户信誉分变动历史 -->
+    <select id="selectUserScoreHistory" resultType="cn.nullcat.sckj.pojo.CreditScoreLog">
+        SELECT
+            id, user_id as userId, score_change as scoreChange,
+            previous_score as previousScore, current_score as currentScore,
+            change_reason as changeReason, related_id as relatedId,
+            operator_id as operatorId, create_time as createTime
+        FROM credit_score_log
+        WHERE user_id = #{userId}
+        <if test="startDate != null">
+            AND create_time >= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND create_time &lt;= #{endDate}
+        </if>
+        ORDER BY create_time DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <!-- 统计用户信誉分变动记录总数 -->
+    <select id="countUserScoreHistory" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM credit_score_log
+        WHERE user_id = #{userId}
+        <if test="startDate != null">
+            AND create_time >= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND create_time &lt;= #{endDate}
+        </if>
+    </select>
+
+
+
+</mapper>

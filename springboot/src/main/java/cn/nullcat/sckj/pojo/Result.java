@@ -21,10 +21,10 @@ public class Result {
         return new Result(1,"success",data);
     }
     
-    //带消息的成功响应
-    public static Result success(String msg){
-        return new Result(1,msg,null);
-    }
+//    //带消息的成功响应
+//    public static Result success(String msg){
+//        return new Result(1,msg,null);
+//    }
     
     //带数据和消息的成功响应
     public static Result success(Object data, String msg){

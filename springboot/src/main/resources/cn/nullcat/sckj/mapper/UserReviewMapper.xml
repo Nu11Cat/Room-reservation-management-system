@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.nullcat.sckj.mapper.UserReviewMapper">
+
+    <!-- 基础列信息 -->
+    <sql id="Base_Column_List">
+        id, reviewer_id, reviewed_user_id, review_type, review_score, review_content,
+        room_id, booking_id, is_processed, evidence_urls, credit_impact, create_time, update_time
+    </sql>
+
+    <!-- 结果映射 -->
+    <resultMap id="ReviewResultMap" type="cn.nullcat.sckj.pojo.UserReview">
+        <id column="id" property="id" />
+        <result column="reviewer_id" property="reviewerId" />
+        <result column="reviewed_user_id" property="reviewedUserId" />
+        <result column="review_type" property="reviewType" />
+        <result column="review_score" property="reviewScore" />
+        <result column="review_content" property="reviewContent" />
+        <result column="room_id" property="roomId" />
+        <result column="booking_id" property="bookingId" />
+        <result column="is_processed" property="isProcessed" />
+        <result column="evidence_urls" property="evidenceUrls" />
+        <result column="credit_impact" property="creditImpact" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <!-- 非数据库字段 -->
+        <result column="reviewer_name" property="reviewerName" />
+        <result column="reviewed_user_name" property="reviewedUserName" />
+        <result column="room_name" property="roomName" />
+    </resultMap>
+
+    <!-- 插入评价 -->
+    <insert id="insert" parameterType="cn.nullcat.sckj.pojo.UserReview" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user_review (
+            reviewer_id, reviewed_user_id, review_type, review_score, review_content,
+            room_id, booking_id, is_processed, evidence_urls, credit_impact, create_time, update_time
+        ) VALUES (
+                     #{reviewerId}, #{reviewedUserId}, #{reviewType}, #{reviewScore}, #{reviewContent},
+                     #{roomId}, #{bookingId}, #{isProcessed}, #{evidenceUrls}, #{creditImpact}, #{createTime}, #{updateTime}
+                 )
+    </insert>
+
+    <!-- 根据ID查询评价 -->
+    <select id="selectById" resultMap="ReviewResultMap">
+        SELECT ur.*,
+               ru.username as reviewer_name,
+               rdu.username as reviewed_user_name,
+               r.name as room_name
+        FROM user_review ur
+                 LEFT JOIN user ru ON ur.reviewer_id = ru.id
+                 LEFT JOIN user rdu ON ur.reviewed_user_id = rdu.id
+                 LEFT JOIN room r ON ur.room_id = r.id
+        WHERE ur.id = #{id}
+    </select>
+
+    <!-- 更新评价 -->
+    <update id="updateById" parameterType="cn.nullcat.sckj.pojo.UserReview">
+        UPDATE user_review
+        <set>
+            <if test="reviewScore != null">review_score = #{reviewScore},</if>
+            <if test="reviewContent != null">review_content = #{reviewContent},</if>
+            <if test="evidenceUrls != null">evidence_urls = #{evidenceUrls},</if>
+            <if test="isProcessed != null">is_processed = #{isProcessed},</if>
+            <if test="creditImpact != null">credit_impact = #{creditImpact},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除评价 -->
+    <delete id="deleteById">
+        DELETE FROM user_review WHERE id = #{id}
+    </delete>
+
+    <!-- 查询用户发出的评价列表 -->
+    <select id="selectOutgoingReviews" resultMap="ReviewResultMap">
+        SELECT ur.*,
+        rdu.username as reviewed_user_name,
+        r.name as room_name
+        FROM user_review ur
+        LEFT JOIN user rdu ON ur.reviewed_user_id = rdu.id
+        LEFT JOIN room r ON ur.room_id = r.id
+        WHERE ur.reviewer_id = #{userId}
+        <if test="reviewType != null">
+            AND ur.review_type = #{reviewType}
+        </if>
+        <if test="startDate != null">
+            AND ur.create_time &gt;= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND ur.create_time &lt;= #{endDate}
+        </if>
+        ORDER BY ur.create_time DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <!-- 查询用户发出的评价总数 -->
+    <select id="countOutgoingReviews" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM user_review
+        WHERE reviewer_id = #{userId}
+        <if test="reviewType != null">
+            AND review_type = #{reviewType}
+        </if>
+        <if test="startDate != null">
+            AND create_time &gt;= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND create_time &lt;= #{endDate}
+        </if>
+    </select>
+
+    <!-- 查询用户收到的评价列表 -->
+    <select id="selectIncomingReviews" resultMap="ReviewResultMap">
+        SELECT ur.*,
+        ru.username as reviewer_name,
+        r.name as room_name
+        FROM user_review ur
+        LEFT JOIN user ru ON ur.reviewer_id = ru.id
+        LEFT JOIN room r ON ur.room_id = r.id
+        WHERE ur.reviewed_user_id = #{userId}
+        <if test="reviewType != null">
+            AND ur.review_type = #{reviewType}
+        </if>
+        <if test="startDate != null">
+            AND ur.create_time &gt;= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND ur.create_time &lt;= #{endDate}
+        </if>
+        ORDER BY ur.create_time DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <!-- 查询用户收到的评价总数 -->
+    <select id="countIncomingReviews" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM user_review
+        WHERE reviewed_user_id = #{userId}
+        <if test="reviewType != null">
+            AND review_type = #{reviewType}
+        </if>
+        <if test="startDate != null">
+            AND create_time &gt;= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND create_time &lt;= #{endDate}
+        </if>
+    </select>
+
+</mapper>

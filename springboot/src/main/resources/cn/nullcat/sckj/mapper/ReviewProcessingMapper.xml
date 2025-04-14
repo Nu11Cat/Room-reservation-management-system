@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.nullcat.sckj.mapper.ReviewProcessingMapper">
+    <!-- 基础列信息 -->
+    <sql id="Base_Column_List">
+        id, review_id, processor_id, processing_result, final_credit_impact, processing_comment, create_time
+    </sql>
+    
+    <!-- 结果映射 -->
+    <resultMap id="ProcessingResultMap" type="cn.nullcat.sckj.pojo.ReviewProcessing">
+        <id column="id" property="id" />
+        <result column="review_id" property="reviewId" />
+        <result column="processor_id" property="processorId" />
+        <result column="processing_result" property="processingResult" />
+        <result column="final_credit_impact" property="finalCreditImpact" />
+        <result column="processing_comment" property="processingComment" />
+        <result column="create_time" property="createTime" />
+        <!-- 非数据库字段 -->
+        <result column="processor_name" property="processorName" />
+        <!-- 关联的评价信息 -->
+        <association property="userReview" javaType="cn.nullcat.sckj.pojo.UserReview">
+            <id column="ur_id" property="id" />
+            <result column="ur_reviewer_id" property="reviewerId" />
+            <result column="ur_reviewed_user_id" property="reviewedUserId" />
+            <result column="ur_review_type" property="reviewType" />
+            <result column="ur_review_score" property="reviewScore" />
+            <result column="ur_review_content" property="reviewContent" />
+            <result column="ur_room_id" property="roomId" />
+            <result column="ur_booking_id" property="bookingId" />
+            <result column="ur_is_processed" property="isProcessed" />
+            <result column="ur_evidence_urls" property="evidenceUrls" />
+            <result column="ur_credit_impact" property="creditImpact" />
+            <result column="ur_create_time" property="createTime" />
+            <result column="ur_update_time" property="updateTime" />
+            <result column="reviewer_name" property="reviewerName" />
+            <result column="reviewed_user_name" property="reviewedUserName" />
+            <result column="room_name" property="roomName" />
+        </association>
+    </resultMap>
+    
+    <!-- 插入处理记录 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" parameterType="cn.nullcat.sckj.pojo.ReviewProcessing">
+        INSERT INTO review_processing (
+            review_id, processor_id, processing_result, final_credit_impact, processing_comment, create_time
+        ) VALUES (
+            #{reviewId}, #{processorId}, #{processingResult}, #{finalCreditImpact}, #{processingComment}, #{createTime}
+        )
+    </insert>
+    
+    <!-- 根据ID查询处理记录 -->
+    <select id="selectById" resultMap="ProcessingResultMap">
+        SELECT rp.*, u.username as processor_name,
+               ur.id as ur_id, ur.reviewer_id as ur_reviewer_id, ur.reviewed_user_id as ur_reviewed_user_id,
+               ur.review_type as ur_review_type, ur.review_score as ur_review_score, 
+               ur.review_content as ur_review_content, ur.room_id as ur_room_id,
+               ur.booking_id as ur_booking_id, ur.is_processed as ur_is_processed,
+               ur.evidence_urls as ur_evidence_urls, ur.credit_impact as ur_credit_impact,
+               ur.create_time as ur_create_time, ur.update_time as ur_update_time,
+               ru.username as reviewer_name, rdu.username as reviewed_user_name,
+               r.name as room_name
+        FROM review_processing rp
+        LEFT JOIN user u ON rp.processor_id = u.id
+        LEFT JOIN user_review ur ON rp.review_id = ur.id
+        LEFT JOIN user ru ON ur.reviewer_id = ru.id
+        LEFT JOIN user rdu ON ur.reviewed_user_id = rdu.id
+        LEFT JOIN room r ON ur.room_id = r.id
+        WHERE rp.id = #{id}
+    </select>
+    
+    <!-- 根据评价ID查询处理记录 -->
+    <select id="selectByReviewId" resultMap="ProcessingResultMap">
+        SELECT rp.*, u.username as processor_name
+        FROM review_processing rp
+        LEFT JOIN user u ON rp.processor_id = u.id
+        WHERE rp.review_id = #{reviewId}
+    </select>
+    
+    <!-- 查询待处理的评价列表 -->
+    <select id="selectPendingReviews" resultType="cn.nullcat.sckj.pojo.UserReview">
+        SELECT ur.*, 
+               ru.username as reviewer_name,
+               rdu.username as reviewed_user_name,
+               r.name as room_name
+        FROM user_review ur
+        LEFT JOIN user ru ON ur.reviewer_id = ru.id
+        LEFT JOIN user rdu ON ur.reviewed_user_id = rdu.id
+        LEFT JOIN room r ON ur.room_id = r.id
+        WHERE ur.is_processed = 0
+        <if test="reviewType != null">
+            AND ur.review_type = #{reviewType}
+        </if>
+        <if test="startDate != null">
+            AND ur.create_time &gt;= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND ur.create_time &lt;= #{endDate}
+        </if>
+        ORDER BY ur.create_time DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+    
+    <!-- 查询待处理评价总数 -->
+    <select id="countPendingReviews" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM user_review
+        WHERE is_processed = 0
+        <if test="reviewType != null">
+            AND review_type = #{reviewType}
+        </if>
+        <if test="startDate != null">
+            AND create_time &gt;= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND create_time &lt;= #{endDate}
+        </if>
+    </select>
+    
+    <!-- 查询已处理的评价列表 -->
+    <select id="selectProcessedReviews" resultMap="ProcessingResultMap">
+        SELECT rp.*, u.username as processor_name,
+               ur.id as ur_id, ur.reviewer_id as ur_reviewer_id, ur.reviewed_user_id as ur_reviewed_user_id,
+               ur.review_type as ur_review_type, ur.review_score as ur_review_score, 
+               ur.review_content as ur_review_content, ur.room_id as ur_room_id,
+               ur.booking_id as ur_booking_id, ur.is_processed as ur_is_processed,
+               ur.evidence_urls as ur_evidence_urls, ur.credit_impact as ur_credit_impact,
+               ur.create_time as ur_create_time, ur.update_time as ur_update_time,
+               ru.username as reviewer_name, rdu.username as reviewed_user_name,
+               r.name as room_name
+        FROM review_processing rp
+        LEFT JOIN user u ON rp.processor_id = u.id
+        LEFT JOIN user_review ur ON rp.review_id = ur.id
+        LEFT JOIN user ru ON ur.reviewer_id = ru.id
+        LEFT JOIN user rdu ON ur.reviewed_user_id = rdu.id
+        LEFT JOIN room r ON ur.room_id = r.id
+        WHERE 1=1
+        <if test="processorId != null">
+            AND rp.processor_id = #{processorId}
+        </if>
+        <if test="processingResult != null">
+            AND rp.processing_result = #{processingResult}
+        </if>
+        <if test="startDate != null">
+            AND rp.create_time &gt;= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND rp.create_time &lt;= #{endDate}
+        </if>
+        ORDER BY rp.create_time DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+    
+    <!-- 查询已处理评价总数 -->
+    <select id="countProcessedReviews" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM review_processing rp
+        WHERE 1=1
+        <if test="processorId != null">
+            AND rp.processor_id = #{processorId}
+        </if>
+        <if test="processingResult != null">
+            AND rp.processing_result = #{processingResult}
+        </if>
+        <if test="startDate != null">
+            AND rp.create_time &gt;= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND rp.create_time &lt;= #{endDate}
+        </if>
+    </select>
+    
+    <!-- 统计评价总数、已处理数和未处理数 -->
+    <select id="countReviewsStatistics" resultType="java.util.Map">
+        SELECT 
+            (SELECT COUNT(*) FROM user_review 
+             <where>
+                <if test="startDate != null">
+                    AND create_time &gt;= #{startDate}
+                </if>
+                <if test="endDate != null">
+                    AND create_time &lt;= #{endDate}
+                </if>
+             </where>
+            ) as total_reviews,
+            (SELECT COUNT(*) FROM user_review 
+             WHERE is_processed = 1
+             <if test="startDate != null">
+                AND create_time &gt;= #{startDate}
+             </if>
+             <if test="endDate != null">
+                AND create_time &lt;= #{endDate}
+             </if>
+            ) as processed_reviews,
+            (SELECT COUNT(*) FROM user_review 
+             WHERE is_processed = 0
+             <if test="startDate != null">
+                AND create_time &gt;= #{startDate}
+             </if>
+             <if test="endDate != null">
+                AND create_time &lt;= #{endDate}
+             </if>
+            ) as pending_reviews
+    </select>
+    
+    <!-- 统计评价类型分布 -->
+    <select id="countReviewTypeDistribution" resultType="java.util.Map">
+        SELECT 
+            review_type, 
+            COUNT(*) as count
+        FROM user_review
+        <where>
+            <if test="startDate != null">
+                AND create_time &gt;= #{startDate}
+            </if>
+            <if test="endDate != null">
+                AND create_time &lt;= #{endDate}
+            </if>
+        </where>
+        GROUP BY review_type
+    </select>
+    
+    <!-- 统计处理结果分布 -->
+    <select id="countProcessingResultDistribution" resultType="java.util.Map">
+        SELECT 
+            processing_result, 
+            COUNT(*) as count
+        FROM review_processing
+        <where>
+            <if test="startDate != null">
+                AND create_time &gt;= #{startDate}
+            </if>
+            <if test="endDate != null">
+                AND create_time &lt;= #{endDate}
+            </if>
+        </where>
+        GROUP BY processing_result
+    </select>
+    
+    <!-- 计算平均处理时间（小时） -->
+    <select id="calculateAverageProcessingTime" resultType="java.lang.Double">
+        SELECT 
+            AVG(TIMESTAMPDIFF(HOUR, ur.create_time, rp.create_time)) as avg_processing_hours
+        FROM review_processing rp
+        JOIN user_review ur ON rp.review_id = ur.id
+        <where>
+            <if test="startDate != null">
+                AND rp.create_time &gt;= #{startDate}
+            </if>
+            <if test="endDate != null">
+                AND rp.create_time &lt;= #{endDate}
+            </if>
+        </where>
+    </select>
+    
+</mapper>
