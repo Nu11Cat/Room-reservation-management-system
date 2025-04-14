@@ -137,9 +137,9 @@ export default {
             if (res && res.code === 1) {
               ElMessage.success('登录成功');
               
-              // 从msg字段获取token而不是data字段
-              const token = res.msg;
-              console.log('从msg字段获取token:', token);
+              // 从data字段获取token
+              const token = res.data;
+              console.log('从data字段获取token:', token);
               
               // 直接存储到localStorage，避免通过store
               localStorage.setItem('token', token);
@@ -328,4 +328,4 @@ export default {
     padding: 30px;
   }
 }
-</style> 
+</style>

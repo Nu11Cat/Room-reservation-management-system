@@ -731,16 +731,19 @@ export default {
     };
     
     // 提交发布通知
-    const submitPublish = () => {
+    const handleSubmitPublish = () => {
+      console.log('handleSubmitPublish 方法被调用');
       publishFormRef.value.validate(async (valid) => {
+        console.log('表单验证结果:', valid);
         if (valid) {
           submitting.value = true;
           try {
+            console.log('即将调用 sendNotification 方法，数据:', publishForm.value);
             const res = await sendNotification(publishForm.value);
+            console.log('sendNotification 返回结果:', res);
             if (res.code === 1) {
               ElMessage.success('通知发布成功');
               publishVisible.value = false;
-              // 重置表单
               publishForm.value = {
                 receiverType: 2,
                 receiverId: null,
@@ -749,7 +752,6 @@ export default {
                 title: '',
                 content: ''
               };
-              // 刷新通知列表
               loadNotifications();
             } else {
               ElMessage.error(res.msg || '发布失败，请重试');
@@ -808,7 +810,7 @@ export default {
       handleSizeChange,
       handleCurrentChange,
       handlePublish,
-      submitPublish,
+      handleSubmitPublish,
       hasPermission,
       Plus
     };
@@ -977,4 +979,4 @@ export default {
 .el-table:deep(.el-table__body-wrapper) {
   min-height: 100px;
 }
-</style> 
+</style>
