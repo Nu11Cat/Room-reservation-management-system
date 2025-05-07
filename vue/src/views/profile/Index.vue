@@ -1,87 +1,136 @@
 <template>
   <div class="profile-container">
+    <div class="page-loading-animation"></div>
     <div class="page-header">
       <h1>个人中心</h1>
+      <div class="header-subtitle">管理您的个人信息和账户设置</div>
     </div>
     
     <div class="profile-content">
       <!-- 左侧基本信息 -->
-      <el-card class="info-card">
-        <el-descriptions :column="1" border direction="vertical">
-          <el-descriptions-item label="用户名">{{ userInfo.username }}</el-descriptions-item>
-          <el-descriptions-item label="用户ID">{{ userInfo.id }}</el-descriptions-item>
-          <el-descriptions-item label="真实姓名">
-            <div class="edit-field">
-              <span>{{ userInfo.realName || '未设置' }}</span>
-              <el-input v-if="editingField === 'realName'" v-model="userForm.realName" placeholder="请输入真实姓名" />
-              <el-button 
-                v-if="editingField !== 'realName'" 
-                type="primary" 
-                size="small" 
-                @click="startEditing('realName')"
-              >
-                修改
-              </el-button>
-              <div v-else class="action-buttons">
-                <el-button type="success" size="small" @click="saveField('realName')">保存</el-button>
-                <el-button size="small" @click="cancelEditing">取消</el-button>
+      <el-card class="info-card" shadow="hover">
+        <div class="card-decoration"></div>
+        <template #header>
+          <div class="card-header">
+            <span><i class="el-icon-user"></i> 基本信息</span>
+          </div>
+        </template>
+        <div class="info-sections">
+          <!-- 基本身份信息 -->
+          <div class="info-section">
+            <h3 class="section-title"><i class="el-icon-user-solid"></i> 身份信息</h3>
+            <el-descriptions :column="2" border>
+              <el-descriptions-item label="用户名">{{ userInfo.username }}</el-descriptions-item>
+              <el-descriptions-item label="用户ID">{{ userInfo.id }}</el-descriptions-item>
+              <el-descriptions-item label="角色">{{ getRoleName(userInfo.roleId) }}</el-descriptions-item>
+              <el-descriptions-item label="身份">{{ userInfo.identity || '学生' }}</el-descriptions-item>
+              <el-descriptions-item label="状态" :span="2">
+                <el-tag :type="userInfo.status === 1 ? 'success' : 'danger'">
+                  {{ userInfo.status === 1 ? '正常' : '禁用' }}
+                </el-tag>
+              </el-descriptions-item>
+            </el-descriptions>
+          </div>
+          
+          <!-- 个人资料 -->
+          <div class="info-section">
+            <h3 class="section-title"><i class="el-icon-notebook-1"></i> 个人资料</h3>
+            <el-descriptions :column="1" border>
+              <el-descriptions-item label="真实姓名">
+                <div class="edit-field">
+                  <span>{{ userInfo.realName || '未设置' }}</span>
+                  <el-input v-if="editingField === 'realName'" v-model="userForm.realName" placeholder="请输入真实姓名" />
+                  <el-button 
+                    v-if="editingField !== 'realName'" 
+                    type="primary" 
+                    size="small" 
+                    @click="startEditing('realName')"
+                    class="edit-button"
+                  >
+                    <i class="el-icon-edit"></i> 修改
+                  </el-button>
+                  <div v-else class="action-buttons">
+                    <el-button type="success" size="small" @click="saveField('realName')">保存</el-button>
+                    <el-button size="small" @click="cancelEditing">取消</el-button>
+                  </div>
+                </div>
+              </el-descriptions-item>
+              <el-descriptions-item label="邮箱">
+                <div class="edit-field">
+                  <span>{{ userInfo.email || '未设置' }}</span>
+                  <el-input v-if="editingField === 'email'" v-model="userForm.email" placeholder="请输入邮箱" />
+                  <el-button 
+                    v-if="editingField !== 'email'" 
+                    type="primary" 
+                    size="small" 
+                    @click="startEditing('email')"
+                    class="edit-button"
+                  >
+                    <i class="el-icon-edit"></i> 修改
+                  </el-button>
+                  <div v-else class="action-buttons">
+                    <el-button type="success" size="small" @click="saveField('email')">保存</el-button>
+                    <el-button size="small" @click="cancelEditing">取消</el-button>
+                  </div>
+                </div>
+              </el-descriptions-item>
+              <el-descriptions-item label="电话">
+                <div class="edit-field">
+                  <span>{{ userInfo.phone || '未设置' }}</span>
+                  <el-input v-if="editingField === 'phone'" v-model="userForm.phone" placeholder="请输入电话" />
+                  <el-button 
+                    v-if="editingField !== 'phone'" 
+                    type="primary" 
+                    size="small" 
+                    @click="startEditing('phone')"
+                    class="edit-button"
+                  >
+                    <i class="el-icon-edit"></i> 修改
+                  </el-button>
+                  <div v-else class="action-buttons">
+                    <el-button type="success" size="small" @click="saveField('phone')">保存</el-button>
+                    <el-button size="small" @click="cancelEditing">取消</el-button>
+                  </div>
+                </div>
+              </el-descriptions-item>
+            </el-descriptions>
+          </div>
+          
+          <!-- 信誉积分 -->
+          <div class="info-section credit-section">
+            <h3 class="section-title"><i class="el-icon-medal"></i> 信誉积分</h3>
+            <div class="credit-score-card">
+              <div class="credit-score-value">
+                <el-tag size="large" :type="getCreditScoreType(userInfo.creditScore)">
+                  {{ userInfo.creditScore || 100 }}
+                </el-tag>
+                <div class="credit-score-label">{{ getCreditScoreLabel(userInfo.creditScore) }}</div>
+              </div>
+              <div class="credit-score-bar">
+                <div class="credit-score-progress" :style="{width: `${(userInfo.creditScore || 100)}%`, backgroundColor: getCreditScoreColor(userInfo.creditScore)}"></div>
               </div>
             </div>
-          </el-descriptions-item>
-          <el-descriptions-item label="邮箱">
-            <div class="edit-field">
-              <span>{{ userInfo.email || '未设置' }}</span>
-              <el-input v-if="editingField === 'email'" v-model="userForm.email" placeholder="请输入邮箱" />
-              <el-button 
-                v-if="editingField !== 'email'" 
-                type="primary" 
-                size="small" 
-                @click="startEditing('email')"
-              >
-                修改
-              </el-button>
-              <div v-else class="action-buttons">
-                <el-button type="success" size="small" @click="saveField('email')">保存</el-button>
-                <el-button size="small" @click="cancelEditing">取消</el-button>
-              </div>
-            </div>
-          </el-descriptions-item>
-          <el-descriptions-item label="电话">
-            <div class="edit-field">
-              <span>{{ userInfo.phone || '未设置' }}</span>
-              <el-input v-if="editingField === 'phone'" v-model="userForm.phone" placeholder="请输入电话" />
-              <el-button 
-                v-if="editingField !== 'phone'" 
-                type="primary" 
-                size="small" 
-                @click="startEditing('phone')"
-              >
-                修改
-              </el-button>
-              <div v-else class="action-buttons">
-                <el-button type="success" size="small" @click="saveField('phone')">保存</el-button>
-                <el-button size="small" @click="cancelEditing">取消</el-button>
-              </div>
-            </div>
-          </el-descriptions-item>
-          <el-descriptions-item label="角色">{{ getRoleName(userInfo.roleId) }}</el-descriptions-item>
-          <el-descriptions-item label="创建时间">{{ formatDateTime(userInfo.createTime) }}</el-descriptions-item>
-          <el-descriptions-item label="更新时间">{{ formatDateTime(userInfo.updateTime) }}</el-descriptions-item>
-          <el-descriptions-item label="状态">
-            <el-tag :type="userInfo.status === 1 ? 'success' : 'danger'">
-              {{ userInfo.status === 1 ? '正常' : '禁用' }}
-            </el-tag>
-          </el-descriptions-item>
-        </el-descriptions>
+          </div>
+          
+          <!-- 时间信息 -->
+          <div class="info-section">
+            <h3 class="section-title"><i class="el-icon-time"></i> 时间信息</h3>
+            <el-descriptions :column="1" border>
+              <el-descriptions-item label="创建时间">{{ formatDateTime(userInfo.createTime) }}</el-descriptions-item>
+              <el-descriptions-item label="更新时间">{{ formatDateTime(userInfo.updateTime) }}</el-descriptions-item>
+            </el-descriptions>
+          </div>
+        </div>
       </el-card>
       
       <!-- 右侧功能区域 -->
       <div class="right-section">
         <!-- 修改密码部分 -->
-        <el-card class="password-card">
+        <el-card class="password-card" shadow="hover">
+          <div class="card-decoration"></div>
           <template #header>
             <div class="card-header">
-              <span>修改密码</span>
+              <span><i class="el-icon-lock"></i> 修改密码</span>
             </div>
           </template>
           <el-form :model="passwordForm" :rules="passwordRules" ref="passwordFormRef" label-width="120px">
@@ -95,17 +144,20 @@
               <el-input v-model="passwordForm.confirmPassword" type="password" show-password />
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" @click="handleChangePassword" :loading="passwordLoading">修改密码</el-button>
-              <el-button @click="resetPasswordForm">重置</el-button>
+              <div class="form-buttons">
+                <el-button type="primary" @click="handleChangePassword" :loading="passwordLoading" class="primary-button">修改密码</el-button>
+                <el-button @click="resetPasswordForm" class="reset-button">重置</el-button>
+              </div>
             </el-form-item>
           </el-form>
         </el-card>
         
         <!-- 个人设置部分 -->
-        <el-card class="settings-card">
+        <el-card class="settings-card" shadow="hover">
+          <div class="card-decoration"></div>
           <template #header>
             <div class="card-header">
-              <span>个人设置</span>
+              <span><i class="el-icon-setting"></i> 个人设置</span>
             </div>
           </template>
           <el-form :model="settingsForm" ref="settingsFormRef" label-width="120px">
@@ -124,8 +176,10 @@
               </el-radio-group>
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" @click="handleSaveSettings" :loading="settingsLoading">保存设置</el-button>
-              <el-button @click="resetSettings">重置</el-button>
+              <div class="form-buttons">
+                <el-button type="primary" @click="handleSaveSettings" :loading="settingsLoading" class="primary-button">保存设置</el-button>
+                <el-button @click="resetSettings" class="reset-button">重置</el-button>
+              </div>
             </el-form-item>
           </el-form>
         </el-card>
@@ -218,6 +272,31 @@ export default {
         3: '审批人'
       };
       return roleMap[roleId] || '未知角色';
+    };
+    
+    // 获取信誉积分标签类型
+    const getCreditScoreType = (score) => {
+      if (!score && score !== 0) return 'success';
+      if (score >= 90) return 'success';
+      if (score >= 70) return 'warning';
+      return 'danger';
+    };
+    
+    // 获取信誉积分颜色
+    // eslint-disable-next-line no-unused-vars
+    const getCreditScoreColor = (score) => {
+      if (!score && score !== 0) return '#67c23a';
+      if (score >= 90) return '#67c23a';
+      if (score >= 70) return '#e6a23c';
+      return '#f56c6c';
+    };
+    
+    // 获取信誉积分标签文本
+    const getCreditScoreLabel = (score) => {
+      if (!score && score !== 0) return '信誉优秀';
+      if (score >= 90) return '信誉优秀';
+      if (score >= 70) return '信誉良好';
+      return '信誉不佳';
     };
     
     // 格式化日期时间
@@ -427,6 +506,9 @@ export default {
       
       getRoleName,
       formatDateTime,
+      getCreditScoreType,
+      getCreditScoreColor,
+      getCreditScoreLabel,
       startEditing,
       cancelEditing,
       saveField,
@@ -441,57 +523,505 @@ export default {
 </script>
 
 <style scoped>
+:root {
+  --primary-color: #409eff;
+  --primary-light: #ecf5ff;
+  --primary-dark: #337ecc;
+  --success-color: #67c23a;
+  --warning-color: #e6a23c;
+  --danger-color: #f56c6c;
+  --text-primary: #303133;
+  --text-regular: #606266;
+  --text-secondary: #909399;
+  --border-color: #dcdfe6;
+  --border-light: #e4e7ed;
+  --bg-color: #f5f7fa;
+  --card-shadow: 0 8px 20px rgba(0, 0, 0, 0.07);
+  --card-shadow-hover: 0 12px 24px rgba(0, 0, 0, 0.12);
+  --transition-normal: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+
 .profile-container {
   padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  background-color: var(--bg-color);
+  min-height: calc(100vh - 64px);
 }
 
 .page-header {
-  margin-bottom: 20px;
+  margin-bottom: 32px;
+  border-bottom: 2px solid var(--primary-light);
+  padding-bottom: 20px;
+  position: relative;
+}
+
+.page-header::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 80px;
+  height: 2px;
+  background-color: var(--primary-color);
+}
+
+.page-header h1 {
+  font-size: 28px;
+  color: var(--text-primary);
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  position: relative;
+  display: inline-block;
+}
+
+.header-subtitle {
+  color: var(--text-secondary);
+  font-size: 16px;
+  margin-top: 8px;
+  font-weight: 400;
 }
 
 .profile-content {
   display: flex;
   gap: 20px;
-  flex-wrap: wrap;
+  margin-top: 20px;
+  width: 100%;
 }
 
 .info-card {
-  flex: 1;
-  min-width: 300px;
+  flex: 3;
+  min-width: 500px;
+  transition: var(--transition-normal);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--card-shadow);
+  background-color: #fff;
+  border: 1px solid var(--border-light);
+  position: relative;
 }
 
-.right-section {
-  flex: 1;
-  min-width: 300px;
-  display: flex;
-  flex-direction: column;
+.info-sections {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 20px;
+  padding: 16px;
+}
+
+@media (max-width: 1200px) {
+  .profile-content {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 768px) {
+  .info-sections {
+    grid-template-columns: 1fr;
+  }
+  
+  .credit-section {
+    grid-column: auto;
+  }
+  
+  .profile-content {
+    flex-direction: column;
+  }
+}
+
+.info-section {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
 }
 
 .password-card,
 .settings-card {
   width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: var(--transition-normal);
+  box-shadow: var(--card-shadow);
+  background-color: #fff;
+  border: 1px solid var(--border-light);
+  position: relative;
+  padding: 0;
+}
+
+.el-form-item {
+  margin-bottom: 18px;
+}
+
+.password-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(circle at top right, rgba(103, 194, 58, 0.2), transparent 70%);
+  opacity: 0.6;
+  z-index: 0;
+}
+
+.settings-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(circle at top right, rgba(230, 162, 60, 0.2), transparent 70%);
+  opacity: 0.6;
+  z-index: 0;
+}
+
+.password-card:hover::before,
+.settings-card:hover::before {
+  opacity: 0.8;
+}
+
+.password-card:hover,
+.settings-card:hover,
+.info-card:hover {
+  box-shadow: var(--card-shadow-hover);
+  transform: translateY(-5px);
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-weight: 700;
+  font-size: 18px;
+  padding: 16px 0;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-light);
+  margin-bottom: 12px;
+  position: relative;
+  z-index: 2;
+}
+
+.card-header span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-header span i {
+  font-size: 20px;
+  color: var(--primary-color);
 }
 
 .edit-field {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.edit-field span {
+  color: var(--text-regular);
+  font-size: 15px;
+  font-weight: 500;
 }
 
 .action-buttons {
   display: flex;
-  gap: 5px;
+  gap: 12px;
 }
 
 .el-descriptions {
   margin: 20px 0;
 }
-</style> 
+
+.el-descriptions-item__label {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.form-buttons {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.edit-button {
+  transition: var(--transition-normal);
+  border-radius: 6px;
+}
+
+.edit-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.2);
+}
+
+/* 自定义标签样式 */
+.el-tag {
+  border-radius: 16px;
+  padding: 0 12px;
+  height: 28px;
+  line-height: 26px;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* 信誉积分样式 */
+.credit-score-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.credit-score-bar {
+  width: 100%;
+  max-width: 400px;
+  height: 12px;
+  background-color: #eee;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-top: 16px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.credit-score-progress {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* 自定义输入框样式 */
+.el-input__inner {
+  border-radius: 8px;
+}
+
+/* 自定义按钮样式 */
+.el-button {
+  border-radius: 8px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  transition: var(--transition-normal);
+}
+
+.el-button--primary:not(.is-disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(64, 158, 255, 0.2);
+}
+
+.el-button--success:not(.is-disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(103, 194, 58, 0.2);
+}
+
+.primary-button {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  border: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.primary-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: all 0.6s;
+}
+
+.primary-button:hover::before {
+  left: 100%;
+}
+
+.reset-button {
+  border: 1px solid var(--border-color);
+  background-color: white;
+  transition: all 0.3s;
+}
+
+.reset-button:hover {
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+  background-color: var(--primary-light);
+}
+
+/* 加载动画 */
+.page-loading-animation {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 4px;
+  background-color: var(--primary-color);
+  animation: loading-bar 1.5s cubic-bezier(0.65, 0.05, 0.36, 1) forwards;
+  z-index: 1000;
+}
+
+@keyframes loading-bar {
+  0% {
+    width: 0;
+    opacity: 1;
+  }
+  90% {
+    width: 100%;
+    opacity: 1;
+  }
+  100% {
+    width: 100%;
+    opacity: 0;
+  }
+}
+
+/* 卡片内容动画 */
+.info-card, .password-card, .settings-card {
+  animation: fade-in-up 0.6s ease-out forwards;
+}
+
+.password-card {
+  animation-delay: 0.1s;
+}
+
+.settings-card {
+  animation-delay: 0.2s;
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .profile-container {
+    padding: 20px;
+  }
+  
+  .profile-content {
+    flex-direction: column;
+    gap: 24px;
+  }
+  
+  .info-card,
+  .right-section {
+    min-width: 100%;
+  }
+  
+  .page-header h1 {
+    font-size: 24px;
+  }
+}
+@media (max-width: 1200px) {
+  .profile-content {
+    gap: 20px;
+  }
+  
+  .info-card,
+  .right-section {
+    min-width: 100%;
+  }
+}
+
+.info-section:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-title i {
+  color: var(--primary-color);
+}
+
+.credit-section {
+  grid-column: 1 / -1;
+}
+
+.credit-score-card {
+  padding: 20px;
+  background: linear-gradient(to right, #f8f9fa, #e9ecef);
+  border-radius: 12px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  margin-bottom: 8px;
+}
+
+.credit-score-value {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.credit-score-label {
+  margin-top: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-regular);
+}
+
+.credit-score-value .el-tag {
+  font-size: 24px;
+  padding: 8px 16px;
+  font-weight: bold;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card-decoration {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary-color), var(--primary-dark));
+  z-index: 1;
+}
+
+.info-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(circle at top right, var(--primary-light), transparent 70%);
+  opacity: 0.6;
+  z-index: 0;
+}
+
+.info-card:hover::before {
+  opacity: 0.8;
+}
+
+.right-section {
+  flex: 2;
+  min-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+</style>

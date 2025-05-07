@@ -158,6 +158,16 @@ const routes = [
           roles: [1], // 只有管理员可访问
           title: '权限管理'
         }
+      },
+      {
+        path: '/special-time',
+        name: 'SpecialTimePeriod',
+        component: () => import('@/views/special-time/Index.vue'),
+        meta: {
+          requiresAuth: true,
+          roles: [1], // 只有管理员可访问
+          title: '特殊时间段管理'
+        }
       }
     ]
   },
@@ -237,4 +247,4 @@ router.beforeEach((to, from, next) => {
   }
 });
 
-export default router; 
+export default router;
