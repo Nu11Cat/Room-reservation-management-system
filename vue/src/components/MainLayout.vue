@@ -120,6 +120,12 @@
               <template #title>通知中心</template>
             </el-menu-item>
             
+            <!-- 特殊时间段管理 -->
+            <el-menu-item index="/special-time" v-if="hasPermission([1])">
+              <el-icon><Timer /></el-icon>
+              <span>特殊时间段管理</span>
+            </el-menu-item>
+            
             <!-- 统计分析 -->
             <el-menu-item index="/statistics" v-if="hasPermission([1])">
               <el-icon><TrendCharts /></el-icon>
@@ -176,7 +182,8 @@ import {
   Notebook,
   List,
   Tickets,
-  InfoFilled
+  InfoFilled,
+  Timer
 } from '@element-plus/icons-vue';
 import { useUserStore } from '@/stores/user';
 import { useConfigStore } from '@/stores/config';
@@ -205,7 +212,8 @@ export default {
     Notebook,
     List,
     Tickets,
-    InfoFilled
+    InfoFilled,
+    Timer
   },
   setup() {
     const router = useRouter();
@@ -475,4 +483,4 @@ export default {
     display: none;
   }
 }
-</style> 
+</style>
