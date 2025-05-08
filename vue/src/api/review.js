@@ -99,7 +99,51 @@ export function getProcessedReviewList(params) {
 // 获取评价处理统计信息
 export function getReviewStatistics() {
   return request({
-    url: '/review/process/statistics',
+    url: '/review/statistics',
     method: 'get'
+  })
+}
+
+// 获取不文明行为类型列表
+export function getReviewTypeList(params) {
+  return request({
+    url: '/review/type/list',
+    method: 'get',
+    params
+  })
+}
+
+// 创建不文明行为类型
+export function createReviewType(data) {
+  return request({
+    url: '/review/type',
+    method: 'post',
+    data
+  })
+}
+
+// 更新不文明行为类型
+export function updateReviewType(id, data) {
+  return request({
+    url: `/review/type/${id}`,
+    method: 'put',
+    data
+  })
+}
+
+// 删除不文明行为类型
+export function deleteReviewType(id) {
+  return request({
+    url: `/review/type/${id}`,
+    method: 'delete'
+  })
+}
+
+// 更新不文明行为类型状态
+export function updateReviewTypeStatus(id, status) {
+  return request({
+    url: `/review/type/${id}/status`,
+    method: 'put',
+    data: { status }
   })
 }

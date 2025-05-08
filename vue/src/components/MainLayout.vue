@@ -146,6 +146,10 @@
                 <el-icon><ChatSquare /></el-icon>
                 <span>评价管理</span>
               </el-menu-item>
+              <el-menu-item index="/review/type" v-if="hasPermission([1])">
+                <el-icon><Edit /></el-icon>
+                <span>不文明行为类型管理</span>
+              </el-menu-item>
             </el-sub-menu>
             
             <!-- 个人中心 -->
