@@ -131,6 +131,22 @@
               <el-icon><TrendCharts /></el-icon>
               <span>统计分析</span>
             </el-menu-item>
+
+            <!-- 评价管理 -->
+            <el-sub-menu index="/review">
+              <template #title>
+                <el-icon><ChatLineSquare /></el-icon>
+                <span>评价管理</span>
+              </template>
+              <el-menu-item index="/review/list">
+                <el-icon><ChatDotSquare /></el-icon>
+                <span>我的评价</span>
+              </el-menu-item>
+              <el-menu-item index="/review/admin" v-if="hasPermission([1])">
+                <el-icon><ChatSquare /></el-icon>
+                <span>评价管理</span>
+              </el-menu-item>
+            </el-sub-menu>
             
             <!-- 个人中心 -->
             <el-menu-item index="/profile">
@@ -183,7 +199,10 @@ import {
   List,
   Tickets,
   InfoFilled,
-  Timer
+  Timer,
+  ChatLineSquare,
+  ChatDotSquare,
+  ChatSquare
 } from '@element-plus/icons-vue';
 import { useUserStore } from '@/stores/user';
 import { useConfigStore } from '@/stores/config';
@@ -213,7 +232,10 @@ export default {
     List,
     Tickets,
     InfoFilled,
-    Timer
+    Timer,
+    ChatLineSquare,
+    ChatDotSquare,
+    ChatSquare
   },
   setup() {
     const router = useRouter();
