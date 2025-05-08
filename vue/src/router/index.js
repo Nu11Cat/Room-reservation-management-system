@@ -200,6 +200,16 @@ const routes = [
         }
       },
       {
+        path: '/review/type',
+        name: 'ReviewType',
+        component: () => import('@/views/review/ReviewType.vue'),
+        meta: {
+          requiresAuth: true,
+          roles: [1], // 只有管理员可访问
+          title: '不文明行为类型管理'
+        }
+      },
+      {
         path: '/review/admin',
         name: 'ReviewAdmin',
         component: () => import('@/views/review/ReviewAdmin.vue'),
