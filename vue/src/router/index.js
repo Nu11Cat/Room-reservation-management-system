@@ -168,6 +168,46 @@ const routes = [
           roles: [1], // 只有管理员可访问
           title: '特殊时间段管理'
         }
+      },
+      {
+        path: '/feedback',
+        name: 'UserFeedback',
+        component: () => import('@/views/feedback/Index.vue'),
+        meta: {
+          requiresAuth: true,
+          roles: [1, 2, 3], // 所有角色都可访问
+          title: '用户评价'
+        }
+      },
+      {
+        path: '/feedback/management',
+        name: 'FeedbackManagement',
+        component: () => import('@/views/feedback/Management.vue'),
+        meta: {
+          requiresAuth: true,
+          roles: [1], // 只有管理员可访问
+          title: '评价管理'
+        }
+      },
+      {
+        path: '/review/list',
+        name: 'ReviewList',
+        component: () => import('@/views/review/ReviewList.vue'),
+        meta: {
+          requiresAuth: true,
+          roles: [1, 2, 3], // 根据业务需求设置可访问角色
+          title: '评价列表'
+        }
+      },
+      {
+        path: '/review/admin',
+        name: 'ReviewAdmin',
+        component: () => import('@/views/review/ReviewAdmin.vue'),
+        meta: {
+          requiresAuth: true,
+          roles: [1], // 只有管理员可访问
+          title: '评价管理'
+        }
       }
     ]
   },
