@@ -107,16 +107,24 @@ export function getReviewStatistics() {
 // 获取不文明行为类型列表
 export function getReviewTypeList(params) {
   return request({
-    url: '/review/type/list',
+    url: '/misconduct/types/page',
     method: 'get',
     params
+  })
+}
+
+// 获取不文明行为类型详情
+export function getReviewTypeDetail(id) {
+  return request({
+    url: `/misconduct/types/${id}`,
+    method: 'get'
   })
 }
 
 // 创建不文明行为类型
 export function createReviewType(data) {
   return request({
-    url: '/review/type',
+    url: '/misconduct/types',
     method: 'post',
     data
   })
@@ -125,7 +133,7 @@ export function createReviewType(data) {
 // 更新不文明行为类型
 export function updateReviewType(id, data) {
   return request({
-    url: `/review/type/${id}`,
+    url: `/misconduct/types/${id}`,
     method: 'put',
     data
   })
@@ -134,16 +142,7 @@ export function updateReviewType(id, data) {
 // 删除不文明行为类型
 export function deleteReviewType(id) {
   return request({
-    url: `/review/type/${id}`,
+    url: `/misconduct/types/${id}`,
     method: 'delete'
-  })
-}
-
-// 更新不文明行为类型状态
-export function updateReviewTypeStatus(id, status) {
-  return request({
-    url: `/review/type/${id}/status`,
-    method: 'put',
-    data: { status }
   })
 }

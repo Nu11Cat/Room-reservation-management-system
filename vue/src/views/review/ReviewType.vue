@@ -11,12 +11,19 @@
       <!-- 类型列表 -->
       <el-table :data="typeList" v-loading="loading" style="width: 100%">
         <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="name" label="类型名称" />
+        <el-table-column prop="typeName" label="类型名称" />
         <el-table-column prop="description" label="描述" show-overflow-tooltip />
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column prop="defaultScoreImpact" label="分数影响" width="100">
           <template #default="{ row }">
-            <el-tag :type="row.status === 1 ? 'success' : 'info'">
-              {{ row.status === 1 ? '启用' : '禁用' }}
+            <span :class="{ 'negative-score': row.defaultScoreImpact < 0 }">
+              {{ row.defaultScoreImpact }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="severityLevel" label="严重程度" width="100">
+          <template #default="{ row }">
+            <el-tag :type="getSeverityType(row.severityLevel)">
+              {{ getSeverityLabel(row.severityLevel) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -27,18 +34,6 @@
               link
               @click="openDialog(row)"
             >编辑</el-button>
-            <el-button
-              type="success"
-              link
-              v-if="row.status === 0"
-              @click="handleStatusChange(row.id, 1)"
-            >启用</el-button>
-            <el-button
-              type="warning"
-              link
-              v-if="row.status === 1"
-              @click="handleStatusChange(row.id, 0)"
-            >禁用</el-button>
             <el-button
               type="danger"
               link
@@ -74,8 +69,8 @@
         :rules="rules"
         label-width="100px"
       >
-        <el-form-item label="类型名称" prop="name">
-          <el-input v-model="form.name" placeholder="请输入类型名称" />
+        <el-form-item label="类型名称" prop="typeName">
+          <el-input v-model="form.typeName" placeholder="请输入类型名称" />
         </el-form-item>
         <el-form-item label="描述" prop="description">
           <el-input
@@ -85,11 +80,22 @@
             placeholder="请输入类型描述"
           />
         </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-radio-group v-model="form.status">
-            <el-radio :label="1">启用</el-radio>
-            <el-radio :label="0">禁用</el-radio>
-          </el-radio-group>
+        <el-form-item label="分数影响" prop="defaultScoreImpact">
+          <el-input-number
+            v-model="form.defaultScoreImpact"
+            :min="-100"
+            :max="0"
+            :step="5"
+            placeholder="请输入分数影响"
+          />
+        </el-form-item>
+        <el-form-item label="严重程度" prop="severityLevel">
+          <el-select v-model="form.severityLevel" placeholder="请选择严重程度">
+            <el-option :value="1" label="轻微" />
+            <el-option :value="2" label="一般" />
+            <el-option :value="3" label="严重" />
+            <el-option :value="4" label="非常严重" />
+          </el-select>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -109,8 +115,7 @@ import {
   getReviewTypeList,
   createReviewType,
   updateReviewType,
-  deleteReviewType,
-  updateReviewTypeStatus
+  deleteReviewType
 } from '@/api/review.js'
 
 // 表格数据
@@ -125,14 +130,15 @@ const dialogVisible = ref(false)
 const formRef = ref(null)
 const form = ref({
   id: null,
-  name: '',
+  typeName: '',
   description: '',
-  status: 1
+  defaultScoreImpact: -5,
+  severityLevel: 1
 })
 
 // 表单验证规则
 const rules = {
-  name: [
+  typeName: [
     { required: true, message: '请输入类型名称', trigger: 'blur' },
     { min: 2, max: 20, message: '长度在 2 到 20 个字符', trigger: 'blur' }
   ],
@@ -140,9 +146,36 @@ const rules = {
     { required: true, message: '请输入类型描述', trigger: 'blur' },
     { max: 200, message: '长度不能超过 200 个字符', trigger: 'blur' }
   ],
-  status: [
-    { required: true, message: '请选择状态', trigger: 'change' }
+  defaultScoreImpact: [
+    { required: true, message: '请输入分数影响', trigger: 'blur' },
+    { type: 'number', message: '分数影响必须为数字', trigger: 'blur' }
+  ],
+  severityLevel: [
+    { required: true, message: '请选择严重程度', trigger: 'change' },
+    { type: 'number', min: 1, max: 4, message: '严重程度范围为1-4', trigger: 'change' }
   ]
+}
+
+// 获取严重程度标签
+const getSeverityLabel = (level) => {
+  const labels = {
+    1: '轻微',
+    2: '一般',
+    3: '严重',
+    4: '非常严重'
+  }
+  return labels[level] || '未知'
+}
+
+// 获取严重程度标签类型
+const getSeverityType = (level) => {
+  const types = {
+    1: 'info',
+    2: 'warning',
+    3: 'danger',
+    4: 'danger'
+  }
+  return types[level] || 'info'
 }
 
 // 加载类型列表
@@ -153,8 +186,8 @@ const loadTypeList = async () => {
       page: currentPage.value,
       pageSize: pageSize.value
     })
-    typeList.value = res.rows || []
-    total.value = res.total || 0
+    typeList.value = res.data.rows || []
+    total.value = res.data.total || 0
   } catch (error) {
     console.error('加载类型列表失败:', error)
     ElMessage.error('加载类型列表失败')
@@ -170,9 +203,10 @@ const openDialog = (row) => {
   } else {
     form.value = {
       id: null,
-      name: '',
+      typeName: '',
       description: '',
-      status: 1
+      defaultScoreImpact: -5,
+      severityLevel: 1
     }
   }
   dialogVisible.value = true
@@ -217,17 +251,6 @@ const handleDelete = async (row) => {
   }
 }
 
-// 更改状态
-const handleStatusChange = async (id, status) => {
-  try {
-    await updateReviewTypeStatus(id, { status })
-    ElMessage.success('状态更新成功')
-    loadTypeList()
-  } catch (error) {
-    console.error('状态更新失败:', error)
-    ElMessage.error('状态更新失败')
-  }
-}
 
 // 分页处理
 const handleSizeChange = (val) => {
@@ -267,5 +290,9 @@ onMounted(() => {
   display: flex;
   justify-content: flex-end;
   margin-top: 20px;
+}
+
+.negative-score {
+  color: #f56c6c;
 }
 </style>
