@@ -506,3 +506,13 @@ CREATE TABLE special_time_period (
     INDEX idx_week_start (week_start_date),           -- 按照周的开始日期索引
     INDEX idx_adjustment_date (adjustment_date)      -- 按照调整时间索引
 ) COMMENT='特殊时间段预约调整表';
+
+
+-- 修改user_review表，添加不文明行为类型字段和信誉分影响值字段
+ALTER TABLE user_review
+-- 添加不文明行为类型数组字段
+    ADD COLUMN misconduct_types JSON COMMENT '不文明行为类型ID数组',
+-- 修改评分字段的约束
+    MODIFY COLUMN review_score TINYINT CHECK (review_score BETWEEN 1 AND 5) COMMENT '整体评价分数（1-5分）',
+-- 修改信用影响字段的注释
+    MODIFY COLUMN credit_impact INT COMMENT '信用分影响（多个不文明行为类型的累计影响）';
