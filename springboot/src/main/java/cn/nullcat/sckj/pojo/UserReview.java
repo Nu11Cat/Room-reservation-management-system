@@ -58,6 +58,12 @@ public class UserReview {
     private Integer reviewType;
     
     /**
+     * 不文明行为类型ID列表，存储为JSON数组
+     */
+    @Schema(description = "不文明行为类型ID列表", example = "[1, 2, 3]")
+    private String misconductTypes;
+    
+    /**
      * 评价内容
      */
     @Schema(description = "评价内容", example = "非常清洁")
@@ -74,6 +80,24 @@ public class UserReview {
      */
     @Schema(description = "是否已处理", example = "0", defaultValue = "0")
     private Integer isProcessed;
+    
+    /**
+     * 处理结果（1-通过，0-不通过）
+     */
+    @Schema(description = "处理结果", example = "1")
+    private Integer processResult;
+    
+    /**
+     * 处理备注
+     */
+    @Schema(description = "处理备注", example = "评价内容属实")
+    private String processNote;
+    
+    /**
+     * 处理时间
+     */
+    @Schema(description = "处理时间", example = "2023-04-01T14:00:00")
+    private Date processTime;
     
     /**
      * 信用分影响
@@ -117,4 +141,10 @@ public class UserReview {
      */
     @Schema(description = "证据材料URL列表")
     private List<String> evidenceUrlList;
+    
+    /**
+     * 不文明行为类型ID列表（非数据库字段，用于前端展示）
+     */
+    @Schema(description = "不文明行为类型ID列表")
+    private List<Integer> misconductTypeList;
 }

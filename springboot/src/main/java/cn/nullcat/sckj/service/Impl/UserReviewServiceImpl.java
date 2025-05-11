@@ -12,6 +12,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,16 +32,58 @@ public class UserReviewServiceImpl implements UserReviewService {
     @Autowired
     private UserMapper userMapper;
 
+    @Autowired
+    private BookingMapper bookingMapper;
+
     @Override
     @Transactional
     public Long submitReview(UserReview userReview) {
-        // 设置创建时间和更新时间
+        // 验证评价对象和预订信息
+        if (userReview.getBookingId() == null) {
+            throw new RuntimeException("预订ID不能为空");
+        }
+
+        // 获取预订信息
+        Booking booking = bookingMapper.selectById(userReview.getBookingId());
+        if (booking == null) {
+            throw new RuntimeException("预订信息不存在");
+        }
+
+        // 验证评价时间窗口（预订结束后24小时内）
         Date now = new Date();
+        long timeDiff = now.getTime() - booking.getEndTime().getTime();
+        if (timeDiff < 0) {
+            throw new RuntimeException("预订尚未结束，不能评价");
+        }
+        if (timeDiff > 24 * 60 * 60 * 1000) {
+            throw new RuntimeException("评价时间已超过预订结束后24小时");
+        }
+
+        // 验证评价权限（只能评价上一个使用者）
+        if (!booking.getUserId().equals(userReview.getReviewerId()) && 
+            !booking.getUserId().equals(userReview.getReviewedUserId())) {
+            throw new RuntimeException("只能评价与预订相关的用户");
+        }
+
+        // 设置创建时间和更新时间
         userReview.setCreateTime(now);
         userReview.setUpdateTime(now);
 
         // 设置默认未处理状态
         userReview.setIsProcessed(0);
+        
+        // 处理不文明行为类型列表
+        if (userReview.getMisconductTypeList() != null && !userReview.getMisconductTypeList().isEmpty()) {
+            // 验证评分和不文明行为类型的匹配
+            if (userReview.getReviewScore() >= 3) {
+                throw new RuntimeException("评分大于等于3分时不能选择不文明行为类型");
+            }
+            // 将List转换为JSON字符串
+            String misconductTypesJson = com.alibaba.fastjson.JSON.toJSONString(userReview.getMisconductTypeList());
+            userReview.setMisconductTypes(misconductTypesJson);
+        } else if (userReview.getReviewScore() < 3) {
+            throw new RuntimeException("评分小于3分时必须选择不文明行为类型");
+        }
 
         // 保存评价到数据库
         int rows = userReviewMapper.insert(userReview);
@@ -47,8 +92,8 @@ public class UserReviewServiceImpl implements UserReviewService {
             throw new RuntimeException("保存评价失败");
         }
 
-        log.info("提交评价成功，ID: {}, 评分: {}, 类型: {}",
-                userReview.getId(), userReview.getReviewScore(), userReview.getReviewType());
+        log.info("提交评价成功，ID: {}, 评分: {}, 类型: {}, 不文明行为类型: {}",
+                userReview.getId(), userReview.getReviewScore(), userReview.getReviewType(), userReview.getMisconductTypes());
 
         return userReview.getId();
     }
@@ -136,6 +181,13 @@ public class UserReviewServiceImpl implements UserReviewService {
 
         // 设置更新时间
         userReview.setUpdateTime(new Date());
+        
+        // 处理不文明行为类型列表
+        if (userReview.getMisconductTypeList() != null && !userReview.getMisconductTypeList().isEmpty()) {
+            // 将List转换为JSON字符串
+            String misconductTypesJson = com.alibaba.fastjson.JSON.toJSONString(userReview.getMisconductTypeList());
+            userReview.setMisconductTypes(misconductTypesJson);
+        }
 
         // 执行更新
         int rows = userReviewMapper.updateById(userReview);
@@ -182,6 +234,194 @@ public class UserReviewServiceImpl implements UserReviewService {
 
         return isAdmin;
     }
+    
+    @Autowired
+    private MisconductTypeMapper misconductTypeMapper;
+
+    /**
+     * 计算不文明行为类型对信誉分的影响
+     * @param misconductTypes 不文明行为类型列表
+     * @return 信誉分影响值
+     */
+    private int calculateCreditImpact(List<Integer> misconductTypes) {
+        if (misconductTypes == null || misconductTypes.isEmpty()) {
+            return 0;
+        }
+        
+        int totalImpact = 0;
+        for (Integer typeId : misconductTypes) {
+            MisconductType type = misconductTypeMapper.getTypeById(typeId);
+            if (type != null) {
+                totalImpact += type.getDefaultScoreImpact();
+            }
+        }
+        
+        return totalImpact;
+    }
+    
+    /**
+     * 处理评价并计算信誉分影响
+     * @param reviewId 评价ID
+     * @param processResult 处理结果（1-通过，0-不通过）
+     * @param processNote 处理备注
+     * @return 处理结果
+     */
+    @Override
+    @Transactional
+    public boolean processReview(Long reviewId, Integer processResult, String processNote) {
+        log.info("处理评价, ID: {}, 处理结果: {}, 处理备注: {}", reviewId, processResult, processNote);
+        
+        // 查询评价信息
+        UserReview review = userReviewMapper.selectById(reviewId);
+        if (review == null) {
+            log.error("评价不存在, ID: {}", reviewId);
+            return false;
+        }
+        
+        // 如果已经处理过，则不再处理
+        if (review.getIsProcessed() == 1) {
+            log.warn("评价已处理, ID: {}", reviewId);
+            return false;
+        }
+        
+        // 处理评价
+        review.setIsProcessed(1);
+        review.setProcessTime(new Date());
+        review.setProcessResult(processResult);
+        review.setProcessNote(processNote);
+        review.setUpdateTime(new Date());
+        
+        // 处理不文明行为类型并计算信誉分影响
+        List<Integer> misconductTypeList = null;
+        if (review.getMisconductTypes() != null && !review.getMisconductTypes().isEmpty()) {
+            try {
+                misconductTypeList = com.alibaba.fastjson.JSON.parseArray(review.getMisconductTypes(), Integer.class);
+                review.setMisconductTypeList(misconductTypeList);
+            } catch (Exception e) {
+                log.error("解析不文明行为类型列表失败: {}", e.getMessage());
+            }
+        }
+        
+        // 只有当处理结果为通过且是差评时，才计算信誉分影响
+        if (processResult == 1 && review.getReviewType() == 2 && misconductTypeList != null && !misconductTypeList.isEmpty()) {
+            int creditImpact = calculateCreditImpact(misconductTypeList);
+            review.setCreditImpact(creditImpact);
+            log.info("计算信誉分影响: {}, 不文明行为类型: {}", creditImpact, review.getMisconductTypes());
+        } else {
+            review.setCreditImpact(0);
+        }
+        
+        // 更新评价
+        int rows = userReviewMapper.updateById(review);
+        boolean success = rows > 0;
+        
+        if (success) {
+            log.info("评价处理成功, ID: {}", reviewId);
+        } else {
+            log.error("评价处理失败, ID: {}", reviewId);
+        }
+        
+        return success;
+    }
+    
+    /**
+     * 批量处理评价
+     * @param reviewIds 评价ID列表
+     * @param processResult 处理结果（1-通过，0-不通过）
+     * @param processNote 处理备注
+     * @return 处理结果
+     */
+    @Override
+    @Transactional
+    public boolean batchProcessReview(List<Long> reviewIds, Integer processResult, String processNote) {
+        log.info("批量处理评价, 评价数量: {}, 处理结果: {}, 处理备注: {}", reviewIds.size(), processResult, processNote);
+        
+        if (reviewIds == null || reviewIds.isEmpty()) {
+            return false;
+        }
+        
+        boolean allSuccess = true;
+        for (Long reviewId : reviewIds) {
+            boolean success = processReview(reviewId, processResult, processNote);
+            if (!success) {
+                allSuccess = false;
+                log.warn("批量处理评价失败, ID: {}", reviewId);
+            }
+        }
+        
+        return allSuccess;
+    }
+    
+    /**
+     * 撤销处理评价
+     * @param reviewId 评价ID
+     * @return 处理结果
+     */
+    @Override
+    @Transactional
+    public boolean undoProcessReview(Long reviewId) {
+        log.info("撤销处理评价, ID: {}", reviewId);
+        
+        // 查询评价信息
+        UserReview review = userReviewMapper.selectById(reviewId);
+        if (review == null) {
+            log.error("评价不存在, ID: {}", reviewId);
+            return false;
+        }
+        
+        // 如果未处理，则不需要撤销
+        if (review.getIsProcessed() == 0) {
+            log.warn("评价未处理, 无需撤销, ID: {}", reviewId);
+            return false;
+        }
+        
+        // 撤销处理
+        review.setIsProcessed(0);
+        review.setProcessTime(null);
+        review.setProcessResult(null);
+        review.setProcessNote(null);
+        review.setCreditImpact(null);
+        review.setUpdateTime(new Date());
+        
+        // 更新评价
+        int rows = userReviewMapper.updateById(review);
+        boolean success = rows > 0;
+        
+        if (success) {
+            log.info("评价撤销处理成功, ID: {}", reviewId);
+        } else {
+            log.error("评价撤销处理失败, ID: {}", reviewId);
+        }
+        
+        return success;
+    }
+    
+    /**
+     * 获取评价统计信息
+     * @return 统计信息
+     */
+    @Override
+    public Map<String, Long> getReviewStatistics() {
+        log.info("获取评价统计信息");
+        
+        Map<String, Long> statistics = new HashMap<>();
+        
+        // 查询待处理评价数量
+        Long pendingCount = userReviewMapper.countByProcessed(0);
+        statistics.put("pendingCount", pendingCount);
+        
+        // 查询已处理评价数量
+        Long processedCount = userReviewMapper.countByProcessed(1);
+        statistics.put("processedCount", processedCount);
+        
+        // 查询总评价数量
+        Long totalCount = pendingCount + processedCount;
+        statistics.put("totalCount", totalCount);
+        
+        log.info("评价统计信息: {}", statistics);
+        
+        return statistics;
+    }
 
     /**
      * 处理评价列表的附加数据
@@ -200,13 +440,18 @@ public class UserReviewServiceImpl implements UserReviewService {
      * @param review 评价对象
      */
     private void processReview(UserReview review) {
-        // 处理证据URL列表
-        if (review.getEvidenceUrls() != null && !review.getEvidenceUrls().isEmpty()) {
-            List<String> urlList = Arrays.stream(review.getEvidenceUrls().split(","))
-                    .map(String::trim)
-                    .filter(s -> !s.isEmpty())
-                    .collect(Collectors.toList());
-            review.setEvidenceUrlList(urlList);
+        if (review != null) {
+            // 处理证据材料URL列表
+            if (review.getEvidenceUrls() != null && !review.getEvidenceUrls().isEmpty()) {
+                List<String> urlList = Arrays.asList(review.getEvidenceUrls().split(","));
+                review.setEvidenceUrlList(urlList);
+            }
+            
+            // 处理不文明行为类型列表
+            if (review.getMisconductTypes() != null && !review.getMisconductTypes().isEmpty()) {
+                List<Integer> typeList = com.alibaba.fastjson.JSON.parseArray(review.getMisconductTypes(), Integer.class);
+                review.setMisconductTypeList(typeList);
+            }
         }
     }
-} 
+}

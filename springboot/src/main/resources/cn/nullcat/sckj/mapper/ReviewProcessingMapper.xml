@@ -32,6 +32,7 @@
             <result column="ur_is_processed" property="isProcessed" />
             <result column="ur_evidence_urls" property="evidenceUrls" />
             <result column="ur_credit_impact" property="creditImpact" />
+            <result column="ur_misconduct_types" property="misconductTypes" />
             <result column="ur_create_time" property="createTime" />
             <result column="ur_update_time" property="updateTime" />
             <result column="reviewer_name" property="reviewerName" />
@@ -57,6 +58,7 @@
                ur.review_content as ur_review_content, ur.room_id as ur_room_id,
                ur.booking_id as ur_booking_id, ur.is_processed as ur_is_processed,
                ur.evidence_urls as ur_evidence_urls, ur.credit_impact as ur_credit_impact,
+               ur.misconduct_types as ur_misconduct_types,
                ur.create_time as ur_create_time, ur.update_time as ur_update_time,
                ru.username as reviewer_name, rdu.username as reviewed_user_name,
                r.name as room_name
@@ -78,7 +80,7 @@
     </select>
     
     <!-- 查询待处理的评价列表 -->
-    <select id="selectPendingReviews" resultType="cn.nullcat.sckj.pojo.UserReview">
+    <select id="selectPendingReviews" resultMap="ReviewResultMap">
         SELECT ur.*, 
                ru.username as reviewer_name,
                rdu.username as reviewed_user_name,
@@ -125,6 +127,7 @@
                ur.review_content as ur_review_content, ur.room_id as ur_room_id,
                ur.booking_id as ur_booking_id, ur.is_processed as ur_is_processed,
                ur.evidence_urls as ur_evidence_urls, ur.credit_impact as ur_credit_impact,
+               ur.misconduct_types as ur_misconduct_types,
                ur.create_time as ur_create_time, ur.update_time as ur_update_time,
                ru.username as reviewer_name, rdu.username as reviewed_user_name,
                r.name as room_name

@@ -14,6 +14,10 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -224,4 +228,166 @@ public class UserReviewController {
         boolean deleted = userReviewService.deleteReview(id);
         return deleted ? Result.success("删除成功") : Result.error("删除失败");
     }
-} 
+    
+    /**
+     * 处理评价（仅限管理员）
+     * @param id 评价ID
+     * @param processForm 处理表单
+     * @param request HTTP请求
+     * @return 操作结果
+     */
+    @PostMapping("/{id}/process")
+    @Operation(summary = "处理评价")
+    public Result processReview(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> processForm,
+            HttpServletRequest request) {
+        Integer userId = (Integer) request.getAttribute("userId");
+        log.info("用户 {} 处理评价: id={}, form={}", userId, id, processForm);
+        
+        // 检查是否是管理员
+        boolean isAdmin = userReviewService.isUserAdmin(Long.valueOf(userId));
+        if (!isAdmin) {
+            return Result.error("只有管理员可以处理评价");
+        }
+        
+        // 获取处理结果和备注
+        Integer processResult = (Integer) processForm.get("processResult");
+        String processNote = (String) processForm.get("processNote");
+        
+        if (processResult == null) {
+            return Result.error("处理结果不能为空");
+        }
+        
+        // 执行处理
+        boolean processed = userReviewService.processReview(id, processResult, processNote);
+        return processed ? Result.success("处理成功") : Result.error("处理失败");
+    }
+    
+    /**
+     * 批量处理评价（仅限管理员）
+     * @param batchForm 批量处理表单
+     * @param request HTTP请求
+     * @return 操作结果
+     */
+    @PostMapping("/batch-process")
+    @Operation(summary = "批量处理评价")
+    public Result batchProcessReview(
+            @RequestBody Map<String, Object> batchForm,
+            HttpServletRequest request) {
+        Integer userId = (Integer) request.getAttribute("userId");
+        log.info("用户 {} 批量处理评价: form={}", userId, batchForm);
+        
+        // 检查是否是管理员
+        boolean isAdmin = userReviewService.isUserAdmin(Long.valueOf(userId));
+        if (!isAdmin) {
+            return Result.error("只有管理员可以处理评价");
+        }
+        
+        // 获取评价ID列表、处理结果和备注
+        @SuppressWarnings("unchecked")
+        List<Long> reviewIds = (List<Long>) batchForm.get("reviewIds");
+        Integer processResult = (Integer) batchForm.get("processResult");
+        String processNote = (String) batchForm.get("processNote");
+        
+        if (reviewIds == null || reviewIds.isEmpty()) {
+            return Result.error("评价ID列表不能为空");
+        }
+        
+        if (processResult == null) {
+            return Result.error("处理结果不能为空");
+        }
+        
+        // 执行批量处理
+        boolean processed = userReviewService.batchProcessReview(reviewIds, processResult, processNote);
+        return processed ? Result.success("批量处理成功") : Result.error("批量处理失败");
+    }
+    
+    /**
+     * 撤销处理评价（仅限管理员）
+     * @param id 评价ID
+     * @param request HTTP请求
+     * @return 操作结果
+     */
+    @PostMapping("/{id}/undo-process")
+    @Operation(summary = "撤销处理评价")
+    public Result undoProcessReview(
+            @PathVariable Long id,
+            HttpServletRequest request) {
+        Integer userId = (Integer) request.getAttribute("userId");
+        log.info("用户 {} 撤销处理评价: id={}", userId, id);
+        
+        // 检查是否是管理员
+        boolean isAdmin = userReviewService.isUserAdmin(Long.valueOf(userId));
+        if (!isAdmin) {
+            return Result.error("只有管理员可以撤销处理评价");
+        }
+        
+        // 执行撤销处理
+        boolean undone = userReviewService.undoProcessReview(id);
+        return undone ? Result.success("撤销处理成功") : Result.error("撤销处理失败");
+    }
+    
+    /**
+     * 获取评价统计信息（仅限管理员）
+     * @param request HTTP请求
+     * @return 统计信息
+     */
+    @GetMapping("/statistics")
+    @Operation(summary = "获取评价统计信息")
+    public Result getReviewStatistics(HttpServletRequest request) {
+        Integer userId = (Integer) request.getAttribute("userId");
+        log.info("用户 {} 获取评价统计信息", userId);
+        
+        // 检查是否是管理员
+        boolean isAdmin = userReviewService.isUserAdmin(Long.valueOf(userId));
+        if (!isAdmin) {
+            return Result.error("只有管理员可以查看统计信息");
+        }
+        
+        // 获取统计信息
+        Map<String, Long> statistics = userReviewService.getReviewStatistics();
+        return Result.success(statistics);
+    }
+    
+    /**
+     * 获取所有不文明行为类型
+     * @return 不文明行为类型列表
+     */
+    @GetMapping("/misconduct-types")
+    @Operation(summary = "获取所有不文明行为类型")
+    public Result getAllMisconductTypes() {
+        log.info("获取所有不文明行为类型");
+        
+        // 这里应该调用服务层方法获取不文明行为类型列表
+        // 由于目前没有实现该服务，这里返回一个模拟数据
+        List<Map<String, Object>> types = new ArrayList<>();
+        
+        Map<String, Object> type1 = new HashMap<>();
+        type1.put("id", 1);
+        type1.put("typeName", "吸烟");
+        types.add(type1);
+        
+        Map<String, Object> type2 = new HashMap<>();
+        type2.put("id", 2);
+        type2.put("typeName", "大声喧哗");
+        types.add(type2);
+        
+        Map<String, Object> type3 = new HashMap<>();
+        type3.put("id", 3);
+        type3.put("typeName", "损坏设备");
+        types.add(type3);
+        
+        Map<String, Object> type4 = new HashMap<>();
+        type4.put("id", 4);
+        type4.put("typeName", "超时使用");
+        types.add(type4);
+        
+        Map<String, Object> type5 = new HashMap<>();
+        type5.put("id", 5);
+        type5.put("typeName", "其他");
+        types.add(type5);
+        
+        return Result.success(types);
+    }
+}

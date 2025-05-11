@@ -5,7 +5,7 @@
     <!-- 基础列信息 -->
     <sql id="Base_Column_List">
         id, reviewer_id, reviewed_user_id, review_type, review_score, review_content,
-        room_id, booking_id, is_processed, evidence_urls, credit_impact, create_time, update_time
+        room_id, booking_id, is_processed, evidence_urls, credit_impact, misconduct_types, create_time, update_time
     </sql>
 
     <!-- 结果映射 -->
@@ -21,6 +21,7 @@
         <result column="is_processed" property="isProcessed" />
         <result column="evidence_urls" property="evidenceUrls" />
         <result column="credit_impact" property="creditImpact" />
+        <result column="misconduct_types" property="misconductTypes" />
         <result column="create_time" property="createTime" />
         <result column="update_time" property="updateTime" />
         <!-- 非数据库字段 -->
@@ -33,10 +34,10 @@
     <insert id="insert" parameterType="cn.nullcat.sckj.pojo.UserReview" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO user_review (
             reviewer_id, reviewed_user_id, review_type, review_score, review_content,
-            room_id, booking_id, is_processed, evidence_urls, credit_impact, create_time, update_time
+            room_id, booking_id, is_processed, evidence_urls, credit_impact, misconduct_types, create_time, update_time
         ) VALUES (
                      #{reviewerId}, #{reviewedUserId}, #{reviewType}, #{reviewScore}, #{reviewContent},
-                     #{roomId}, #{bookingId}, #{isProcessed}, #{evidenceUrls}, #{creditImpact}, #{createTime}, #{updateTime}
+                     #{roomId}, #{bookingId}, #{isProcessed}, #{evidenceUrls}, #{creditImpact}, #{misconductTypes}, #{createTime}, #{updateTime}
                  )
     </insert>
 
@@ -62,6 +63,7 @@
             <if test="evidenceUrls != null">evidence_urls = #{evidenceUrls},</if>
             <if test="isProcessed != null">is_processed = #{isProcessed},</if>
             <if test="creditImpact != null">credit_impact = #{creditImpact},</if>
+            <if test="misconductTypes != null">misconduct_types = #{misconductTypes},</if>
             <if test="updateTime != null">update_time = #{updateTime},</if>
         </set>
         WHERE id = #{id}

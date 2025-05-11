@@ -5,6 +5,8 @@ import cn.nullcat.sckj.pojo.Result;
 import cn.nullcat.sckj.pojo.UserReview;
 
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 用户评价服务接口
@@ -71,4 +73,35 @@ public interface UserReviewService {
      * @return 是否是管理员
      */
     boolean isUserAdmin(Long userId);
-} 
+    
+    /**
+     * 处理评价
+     * @param reviewId 评价ID
+     * @param processResult 处理结果（1-通过，0-不通过）
+     * @param processNote 处理备注
+     * @return 处理结果
+     */
+    boolean processReview(Long reviewId, Integer processResult, String processNote);
+    
+    /**
+     * 批量处理评价
+     * @param reviewIds 评价ID列表
+     * @param processResult 处理结果（1-通过，0-不通过）
+     * @param processNote 处理备注
+     * @return 处理结果
+     */
+    boolean batchProcessReview(List<Long> reviewIds, Integer processResult, String processNote);
+    
+    /**
+     * 撤销处理评价
+     * @param reviewId 评价ID
+     * @return 处理结果
+     */
+    boolean undoProcessReview(Long reviewId);
+    
+    /**
+     * 获取评价统计信息
+     * @return 统计信息
+     */
+    Map<String, Long> getReviewStatistics();
+}
