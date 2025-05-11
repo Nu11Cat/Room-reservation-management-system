@@ -113,6 +113,14 @@ export function getReviewTypeList(params) {
   })
 }
 
+// 获取所有不文明行为类型（不分页）
+export function getAllReviewTypes() {
+  return request({
+    url: '/misconduct/types/all',
+    method: 'get'
+  })
+}
+
 // 获取不文明行为类型详情
 export function getReviewTypeDetail(id) {
   return request({

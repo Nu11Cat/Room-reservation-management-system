@@ -59,6 +59,26 @@
             placeholder="请输入您的评价内容"
           />
         </el-form-item>
+        <el-form-item label="不文明行为" prop="misconductTypes" v-if="feedbackForm.rating < 3">
+          <el-select
+            v-model="feedbackForm.misconductTypes"
+            multiple
+            placeholder="请选择不文明行为类型"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="item in misconductTypeOptions"
+              :key="item.id"
+              :label="item.typeName"
+              :value="item.id"
+            >
+              <span>{{ item.typeName }}</span>
+              <span style="float: right; color: #8492a6; font-size: 13px">
+                影响: {{ item.defaultScoreImpact }}
+              </span>
+            </el-option>
+          </el-select>
+        </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
@@ -73,8 +93,9 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue';
+import { onMounted, reactive, ref, watch } from 'vue';
 import { ElMessage } from 'element-plus';
+import { getAllReviewTypes } from '@/api/review';
 
 // 数据列表相关
 const loading = ref(false);
@@ -89,18 +110,34 @@ const feedbackFormRef = ref(null);
 const submitLoading = ref(false);
 const bookingOptions = ref([]);
 
+// 不文明行为类型列表
+const misconductTypeOptions = ref([]);
+
+// 获取所有不文明行为类型
+const loadMisconductTypes = async () => {
+  try {
+    const res = await getAllReviewTypes();
+    misconductTypeOptions.value = res.data || [];
+  } catch (error) {
+    console.error('获取不文明行为类型失败:', error);
+    ElMessage.error('获取不文明行为类型失败');
+  }
+};
+
 // 表单数据
 const feedbackForm = reactive({
   bookingId: '',
   rating: 0,
-  comment: ''
+  comment: '',
+  misconductTypes: [] // 不文明行为类型ID数组
 });
 
 // 表单验证规则
 const rules = {
   bookingId: [{ required: true, message: '请选择会议室预订记录', trigger: 'change' }],
   rating: [{ required: true, message: '请选择评分', trigger: 'change' }],
-  comment: [{ required: true, message: '请输入评价内容', trigger: 'blur' }]
+  comment: [{ required: true, message: '请输入评价内容', trigger: 'blur' }],
+  misconductTypes: [{ required: true, message: '请选择不文明行为类型', trigger: 'change' }]
 };
 
 // 获取评价列表
@@ -137,8 +174,16 @@ const getBookingOptions = async () => {
 // 打开评价对话框
 const openFeedbackDialog = async () => {
   await getBookingOptions();
+  await loadMisconductTypes();
   dialogVisible.value = true;
 };
+
+// 监听评分变化，当评分大于等于3时清空不文明行为类型
+watch(() => feedbackForm.rating, (newRating) => {
+  if (newRating >= 3) {
+    feedbackForm.misconductTypes = [];
+  }
+});
 
 // 提交评价
 const submitFeedback = async () => {
@@ -146,10 +191,19 @@ const submitFeedback = async () => {
   
   await feedbackFormRef.value.validate(async (valid) => {
     if (valid) {
+      // 检查差评是否选择了不文明行为类型
+      if (feedbackForm.rating < 3 && (!feedbackForm.misconductTypes || feedbackForm.misconductTypes.length === 0)) {
+        ElMessage.warning('差评必须选择至少一种不文明行为类型');
+        return;
+      }
+      
       submitLoading.value = true;
       try {
         // TODO: 调用提交评价接口
-        // await submitFeedback(feedbackForm);
+        // await submitFeedback({
+        //   ...feedbackForm,
+        //   misconductTypes: feedbackForm.rating < 3 ? feedbackForm.misconductTypes : []
+        // });
         ElMessage.success('评价提交成功');
         dialogVisible.value = false;
         getFeedbackList(); // 刷新列表

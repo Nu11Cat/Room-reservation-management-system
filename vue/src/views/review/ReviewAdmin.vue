@@ -82,6 +82,22 @@
             </template>
           </el-table-column>
           <el-table-column prop="content" label="评价内容" show-overflow-tooltip />
+          <el-table-column prop="misconductTypes" label="不文明行为类型" width="200">
+            <template #default="{ row }">
+              <div v-if="row.misconductTypes && row.misconductTypes.length > 0">
+                <el-tag 
+                  v-for="typeId in row.misconductTypes" 
+                  :key="typeId"
+                  size="small"
+                  type="danger"
+                  style="margin-right: 5px; margin-bottom: 5px;"
+                >
+                  {{ getMisconductTypeName(typeId) }}
+                </el-tag>
+              </div>
+              <span v-else>-</span>
+            </template>
+          </el-table-column>
           <el-table-column prop="createTime" label="创建时间" width="180" />
           <el-table-column label="操作" width="200" fixed="right">
             <template #default="{ row }">
@@ -129,6 +145,22 @@
             </template>
           </el-table-column>
           <el-table-column prop="content" label="评价内容" show-overflow-tooltip />
+          <el-table-column prop="misconductTypes" label="不文明行为类型" width="200">
+            <template #default="{ row }">
+              <div v-if="row.misconductTypes && row.misconductTypes.length > 0">
+                <el-tag 
+                  v-for="typeId in row.misconductTypes" 
+                  :key="typeId"
+                  size="small"
+                  type="danger"
+                  style="margin-right: 5px; margin-bottom: 5px;"
+                >
+                  {{ getMisconductTypeName(typeId) }}
+                </el-tag>
+              </div>
+              <span v-else>-</span>
+            </template>
+          </el-table-column>
           <el-table-column prop="processTime" label="处理时间" width="180" />
           <el-table-column prop="processResult" label="处理结果" width="100">
             <template #default="{ row }">
@@ -204,7 +236,8 @@ import {
   processReview,
   batchProcessReview,
   undoProcessReview,
-  getReviewStatistics
+  getReviewStatistics,
+  getAllReviewTypes
 } from '@/api/review'
 
 // 统计数据
@@ -214,6 +247,9 @@ const statistics = ref({
   totalCount: 0
 })
 
+// 不文明行为类型列表
+const misconductTypes = ref([])
+
 // 加载统计数据
 const loadStatistics = async () => {
   try {
@@ -222,6 +258,24 @@ const loadStatistics = async () => {
   } catch (error) {
     console.error('加载统计数据失败:', error)
   }
+}
+
+// 加载不文明行为类型
+const loadMisconductTypes = async () => {
+  try {
+    const res = await getAllReviewTypes()
+    misconductTypes.value = res.data || []
+  } catch (error) {
+    console.error('加载不文明行为类型失败:', error)
+  }
+}
+
+// 获取不文明行为类型名称
+const getMisconductTypeName = (typeId) => {
+  // 确保typeId是数字类型
+  const numericTypeId = typeof typeId === 'string' ? parseInt(typeId, 10) : typeId
+  const type = misconductTypes.value.find(item => item.id === numericTypeId)
+  return type ? type.typeName : '未知类型'
 }
 
 // 表格数据
@@ -382,6 +436,7 @@ const handleTabClick = () => {
 // 初始化
 onMounted(() => {
   loadStatistics()
+  loadMisconductTypes()
   loadReviews()
 })
 </script>

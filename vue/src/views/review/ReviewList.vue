@@ -124,6 +124,26 @@
             placeholder="请输入评价内容"
           ></el-input>
         </el-form-item>
+        <el-form-item label="不文明行为" v-if="editForm.reviewScore < 3">
+          <el-select
+            v-model="editForm.misconductTypes"
+            multiple
+            placeholder="请选择不文明行为类型"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="item in misconductTypeOptions"
+              :key="item.id"
+              :label="item.typeName"
+              :value="item.id"
+            >
+              <span>{{ item.typeName }}</span>
+              <span style="float: right; color: #8492a6; font-size: 13px">
+                影响: {{ item.defaultScoreImpact }}
+              </span>
+            </el-option>
+          </el-select>
+        </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
@@ -142,9 +162,9 @@ export default {
 </script>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getOutgoingReviews, getIncomingReviews, updateReview, deleteReview } from '@/api/review'
+import { getOutgoingReviews, getIncomingReviews, updateReview, deleteReview, getAllReviewTypes } from '@/api/review'
 
 // 查询参数
 const queryParams = reactive({
@@ -176,8 +196,12 @@ const editDialogVisible = ref(false)
 const editForm = reactive({
   id: null,
   reviewScore: 5,
-  reviewContent: ''
+  reviewContent: '',
+  misconductTypes: [] // 不文明行为类型ID数组
 })
+
+// 不文明行为类型列表
+const misconductTypeOptions = ref([])
 
 // 获取评价列表
 const getReviewList = async () => {
@@ -253,20 +277,46 @@ const getReviewTypeTag = (type) => {
   return tagTypes[type] || ''
 }
 
+// 获取所有不文明行为类型
+const loadMisconductTypes = async () => {
+  try {
+    const res = await getAllReviewTypes()
+    misconductTypeOptions.value = res.data || []
+  } catch (error) {
+    console.error('获取不文明行为类型失败:', error)
+    ElMessage.error('获取不文明行为类型失败')
+  }
+}
+
 // 处理修改评价
 const handleEdit = (row) => {
   editForm.id = row.id
   editForm.reviewScore = row.reviewScore
   editForm.reviewContent = row.reviewContent
+  editForm.misconductTypes = row.misconductTypes || []
   editDialogVisible.value = true
 }
+
+// 监听评分变化，当评分大于等于3时清空不文明行为类型
+watch(() => editForm.reviewScore, (newScore) => {
+  if (newScore >= 3) {
+    editForm.misconductTypes = []
+  }
+})
 
 // 提交修改
 const submitEdit = async () => {
   try {
+    // 检查差评是否选择了不文明行为类型
+    if (editForm.reviewScore < 3 && (!editForm.misconductTypes || editForm.misconductTypes.length === 0)) {
+      ElMessage.warning('差评必须选择至少一种不文明行为类型')
+      return
+    }
+    
     await updateReview(editForm.id, {
       reviewScore: editForm.reviewScore,
-      reviewContent: editForm.reviewContent
+      reviewContent: editForm.reviewContent,
+      misconductTypes: editForm.reviewScore < 3 ? editForm.misconductTypes : []
     })
     ElMessage.success('修改成功')
     editDialogVisible.value = false
@@ -298,6 +348,7 @@ const handleDelete = (row) => {
 // 页面加载时获取数据
 onMounted(() => {
   getReviewList()
+  loadMisconductTypes()
 })
 </script>
 
