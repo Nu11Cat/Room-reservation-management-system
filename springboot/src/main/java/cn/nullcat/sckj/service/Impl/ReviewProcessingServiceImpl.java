@@ -327,9 +327,14 @@ public class ReviewProcessingServiceImpl implements ReviewProcessingService {
      * @return 是否为管理员
      */
     private boolean isUserAdmin(Long userId) {
-        // TODO: 实现判断用户是否为管理员的逻辑
-        // 示例实现，根据实际情况调整
-        Integer roleId = userMapper.selectRoleIdByUserId(userId);
-        return roleId != null && roleId == 1; // 假设1为管理员角色ID
+        // 查询用户信息
+        cn.nullcat.sckj.pojo.User user = userMapper.getById(Math.toIntExact(userId));
+        
+        // 检查用户角色是否为管理员（角色ID为1或2的是管理员）
+        boolean isAdmin = user != null && (user.getRoleId() == 1 || user.getRoleId() == 2);
+        
+        log.info("用户 {} 是管理员: {}", userId, isAdmin);
+        
+        return isAdmin;
     }
 }

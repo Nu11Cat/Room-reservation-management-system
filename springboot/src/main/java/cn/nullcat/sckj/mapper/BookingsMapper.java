@@ -27,6 +27,14 @@ public interface BookingsMapper {
      */
     @Select("select * from booking where id = #{id}")
     Booking getById(Integer id);
+    
+    /**
+     * 根据ID查询预约信息
+     * @param id 预约ID
+     * @return 预约信息
+     */
+    @Select("select * from booking where id = #{id}")
+    Booking selectById(Long id);
 
     /**
      *

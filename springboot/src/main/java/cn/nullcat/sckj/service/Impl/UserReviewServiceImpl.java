@@ -1,10 +1,10 @@
 package cn.nullcat.sckj.service.Impl;
 
+import cn.nullcat.sckj.mapper.BookingsMapper;
+import cn.nullcat.sckj.mapper.MisconductTypeMapper;
 import cn.nullcat.sckj.mapper.UserMapper;
 import cn.nullcat.sckj.mapper.UserReviewMapper;
-import cn.nullcat.sckj.pojo.PageBean;
-import cn.nullcat.sckj.pojo.User;
-import cn.nullcat.sckj.pojo.UserReview;
+import cn.nullcat.sckj.pojo.*;
 import cn.nullcat.sckj.service.UserReviewService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,8 +32,10 @@ public class UserReviewServiceImpl implements UserReviewService {
     @Autowired
     private UserMapper userMapper;
 
+   // @Autowired
+    //private BookingMapper bookingMapper;
     @Autowired
-    private BookingMapper bookingMapper;
+    private BookingsMapper bookingsMapper;
 
     @Override
     @Transactional
@@ -44,7 +46,7 @@ public class UserReviewServiceImpl implements UserReviewService {
         }
 
         // 获取预订信息
-        Booking booking = bookingMapper.selectById(userReview.getBookingId());
+        Booking booking = bookingsMapper.selectById(userReview.getBookingId());
         if (booking == null) {
             throw new RuntimeException("预订信息不存在");
         }
@@ -60,7 +62,7 @@ public class UserReviewServiceImpl implements UserReviewService {
         }
 
         // 验证评价权限（只能评价上一个使用者）
-        if (!booking.getUserId().equals(userReview.getReviewerId()) && 
+        if (!booking.getUserId().equals(userReview.getReviewerId()) &&
             !booking.getUserId().equals(userReview.getReviewedUserId())) {
             throw new RuntimeException("只能评价与预订相关的用户");
         }

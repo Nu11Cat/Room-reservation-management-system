@@ -9,6 +9,28 @@
     </sql>
     
     <!-- 结果映射 -->
+    <resultMap id="ReviewResultMap" type="cn.nullcat.sckj.pojo.UserReview">
+        <id column="id" property="id" />
+        <result column="reviewer_id" property="reviewerId" />
+        <result column="reviewed_user_id" property="reviewedUserId" />
+        <result column="review_type" property="reviewType" />
+        <result column="review_score" property="reviewScore" />
+        <result column="review_content" property="reviewContent" />
+        <result column="room_id" property="roomId" />
+        <result column="booking_id" property="bookingId" />
+        <result column="is_processed" property="isProcessed" />
+        <result column="evidence_urls" property="evidenceUrls" />
+        <result column="credit_impact" property="creditImpact" />
+        <result column="misconduct_types" property="misconductTypes" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <!-- 非数据库字段 -->
+        <result column="reviewer_name" property="reviewerName" />
+        <result column="reviewed_user_name" property="reviewedUserName" />
+        <result column="room_name" property="roomName" />
+    </resultMap>
+    
+    <!-- 处理结果映射 -->
     <resultMap id="ProcessingResultMap" type="cn.nullcat.sckj.pojo.ReviewProcessing">
         <id column="id" property="id" />
         <result column="review_id" property="reviewId" />

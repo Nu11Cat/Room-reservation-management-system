@@ -108,4 +108,12 @@ public interface UserReviewMapper {
         @Param("startDate") Date startDate,
         @Param("endDate") Date endDate
     );
+    
+    /**
+     * 根据处理状态统计评价数量
+     * @param processed 处理状态：0-未处理，1-已处理
+     * @return 评价数量
+     */
+    @org.apache.ibatis.annotations.Select("select count(*) from user_review where is_processed = #{processed}")
+    Long countByProcessed(int processed);
 }
